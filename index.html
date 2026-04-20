@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NyayaMind — AI Legal Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<!-- Robot background layer — shown only on General Public signup page -->
+<div id="robot-bg-layer" class="robot-bg-layer">
+    <iframe
+        src="https://my.spline.design/genkubgreetingrobot-IQC8VAKp8GuBoawVR8kJYNX3/"
+        frameborder="0"
+        width="100%"
+        height="100%">
+    </iframe>
+</div>
+
+
+
+
+
+
+<!-- ======= NAVBAR ======= -->
+<div class="navbar-wrapper">
+  <nav id="navbar">
+    <a class="nav-logo" href="#" onclick="showPage('home')">NyayaMind</a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#" onclick="showPage('home')" data-page="home">Home</a></li>
+      <li><a href="#" onclick="showPage('about')" data-page="about">About</a></li>
+      <li><a href="#" onclick="showPage('compare')" data-page="compare">Compare</a></li>
+      <li><a href="#" onclick="showPage('docparser')" data-page="docparser">Doc Parser</a></li>
+      <li><a href="#" onclick="showPage('dashboard')" data-page="dashboard">Dashboard</a></li>
+      <li><a href="#" onclick="showPage('bookmarks')" data-page="bookmarks">Bookmarks</a></li>
+      <li><a href="#" onclick="showPage('history')" data-page="history">History</a></li>
+      <li><a href="#" onclick="showPage('profile')" data-page="profile">Profile</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div id="nav-guest-actions" style="display:flex;gap:10px;align-items:center">
+        <a href="#" onclick="showPage('login')" class="btn-try">Log In</a>
+        <a href="#" onclick="showPage('signup')" class="btn-signup">Sign Up</a>
+      </div>
+      <div class="nav-user" id="nav-user" style="display:none">
+        <div class="nav-user-avatar" id="nav-user-avatar"></div>
+        <span class="nav-user-name" id="nav-user-name"></span>
+        <div class="nav-user-dropdown">
+          <div class="nud-item" onclick="showPage('dashboard')">📊 Dashboard</div>
+          <div class="nud-item" onclick="showPage('profile')">👤 Profile</div>
+          <div class="nud-item" onclick="showPage('login')">🔄 Switch Account</div>
+          <div class="nud-divider"></div>
+          <div class="nud-item nud-danger" onclick="logout()">Sign Out</div>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </nav>
+</div>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#" onclick="showPage('home'); closeMobile()">Home</a>
+  <a href="#" onclick="showPage('about'); closeMobile()">About</a>
+
+  <a href="#" onclick="showPage('compare'); closeMobile()">Compare Cases</a>
+  <a href="#" onclick="showPage('docparser'); closeMobile()">Doc Parser</a>
+  <a href="#" onclick="showPage('dashboard'); closeMobile()">Dashboard</a>
+  <a href="#" onclick="showPage('bookmarks'); closeMobile()">Bookmarks</a>
+  <a href="#" onclick="showPage('history'); closeMobile()">History</a>
+  <a href="#" onclick="showPage('profile'); closeMobile()">Profile</a>
+  <a href="#" onclick="showPage('login'); closeMobile()" style="color:var(--accent)">Log In</a>
+</div>
+
+<!-- ======= HOME ======= -->
+<section id="page-home" class="page active" style="position: relative;">
+  <div id="home-threads-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></div>
+  <div class="hero-overlay" style="z-index: 1;"></div>
+  <div class="hero-content">
+    <p class="hero-tag">AI Powered Legal Intelligence</p>
+    <h1 class="hero-heading" id="typewriter-text"><span class="cursor"></span></h1>
+    <div class="hero-buttons">
+      <button class="btn-hero" onclick="showPage('about')">About NyayaMind →</button>
+      <button class="btn-hero btn-hero-outline" onclick="showPage('dashboard')">Search Cases →</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span>10K+</span><p>Legal Cases</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>98%</span><p>Accuracy Rate</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>24/7</span><p>AI Assistance</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= ABOUT ======= -->
+<section id="page-about" class="page">
+  <div class="page-inner">
+    <div class="about-card">
+      <div class="about-left">
+        <h1 class="about-title">Understanding Law <em>Together</em></h1>
+        <p class="about-desc">NyayaMind is an AI-powered legal intelligence system that simplifies complex legal cases into easy insights and structured understanding — built for advocates, students, and citizens alike.</p>
+        <div class="about-features">
+          <div class="feature-item"><span class="fi-icon">⚖️</span><div><strong>Smart Case Analysis</strong><p>AI breaks down any legal case into digestible summaries</p></div></div>
+          <div class="feature-item"><span class="fi-icon">📄</span><div><strong>Document Parsing</strong><p>Upload PDF, DOCX, or TXT legal documents and get instant AI analysis</p></div></div>
+          <div class="feature-item"><span class="fi-icon">🔍</span><div><strong>Case Search</strong><p>Search 10,000+ Indian court cases by keyword, court, or year</p></div></div>
+          <div class="feature-item"><span class="fi-icon">⚖</span><div><strong>Case Comparison</strong><p>Compare up to 3 cases side-by-side with similarity scoring</p></div></div>
+        </div>
+        <div class="about-actions">
+          <button class="btn-primary" onclick="showPage('cases')">Explore Cases</button>
+          <button class="btn-secondary" onclick="showPage('home')">Go Home</button>
+        </div>
+      </div>
+      <div class="about-right">
+        <div class="about-image-wrapper">
+          <img src="1000071303.jpg" alt="NyayaMind Visual" class="about-main-img">
+        </div>
+      </div>
+    </div><!-- /.about-card -->
+  </div><!-- /.page-inner -->
+</section>
+
+<!-- ======= LOGIN ======= -->
+<section id="page-login" class="page">
+  <div class="signup-bg"><div class="signup-orb signup-orb-1"></div><div class="signup-orb signup-orb-2"></div></div>
+  <div class="auth-center-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">NyayaMind</div>
+      <h2 class="su-title" style="text-align:center">Welcome Back</h2>
+      <p class="su-sub" style="text-align:center;margin-bottom:24px">Sign in to your account</p>
+      <div id="saved-accounts-section" style="display:none">
+        <p class="saved-accounts-label">Choose an account</p>
+        <div id="saved-accounts-list"></div>
+        <div class="auth-divider"><span>or use a different account</span></div>
+      </div>
+      <div class="su-field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div id="login-error" class="auth-error" style="display:none"></div>
+      <button class="su-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-switch">Don't have an account? <a href="#" onclick="showPage('signup')">Create one →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= SIGN UP ======= -->
+<section id="page-signup" class="page">
+  <div class="signup-bg"><div class="signup-orb signup-orb-1"></div><div class="signup-orb signup-orb-2"></div></div>
+  <div class="signup-wrap">
+    <div class="signup-left">
+      <div class="signup-brand">
+        <span class="signup-logo">NyayaMind</span>
+        <p class="signup-tagline">AI-Powered Legal Intelligence</p>
+      </div>
+      <div class="signup-pitch">
+        <div class="sp-item"><span class="sp-icon">⚖️</span><div><strong>10,000+ Cases</strong><p>Access landmark judgments from every major Indian court</p></div></div>
+        <div class="sp-item"><span class="sp-icon">🌐</span><div><strong>Sarvam AI Translation</strong><p>Real-time translation into 8 Indian languages via Sarvam AI</p></div></div>
+        <div class="sp-item"><span class="sp-icon">🛡️</span><div><strong>Role-Based Access</strong><p>Tailored tools for professionals and the public alike</p></div></div>
+      </div>
+    </div>
+    <div class="signup-right">
+      <div class="signup-card">
+        <div id="sarvam-key-prompt" class="sarvam-key-box" style="display:none">
+          <div class="sk-icon">🌐</div>
+          <h3>Enable Real Translation</h3>
+          <p>Enter your <a href="https://dashboard.sarvam.ai/" target="_blank">Sarvam AI API key</a> to activate real-time translation.</p>
+          <div class="su-field" style="margin-top:14px">
+            <label>API Subscription Key</label>
+            <input type="text" id="sarvam-api-key-input" placeholder="Enter your Sarvam API key…" />
+          </div>
+          <div id="sarvam-key-error" class="auth-error" style="display:none;margin-bottom:10px"></div>
+          <div class="su-nav">
+            <button class="su-btn-ghost" onclick="skipSarvam()">Skip for now</button>
+            <button class="su-btn" onclick="saveSarvamKey()" style="flex:1">Activate →</button>
+          </div>
+        </div>
+        <div class="signup-steps">
+          <div class="step-dot active" id="sdot-1">1</div><div class="step-line"></div>
+          <div class="step-dot" id="sdot-2">2</div><div class="step-line"></div>
+          <div class="step-dot" id="sdot-3">3</div>
+        </div>
+        <div class="signup-step" id="step-1">
+          <h2 class="su-title">Create Your Account</h2>
+          <p class="su-sub">Start with the basics</p>
+          <div class="su-field"><label>Full Name</label><input type="text" id="su-name" placeholder="e.g. Arjun Sharma" /></div>
+          <div class="su-field"><label>Email Address</label><input type="email" id="su-email" placeholder="e.g. arjun@lawfirm.in" /></div>
+          <div id="su-email-taken" class="auth-error" style="display:none">An account with this email already exists. <a href="#" onclick="showPage('login')">Log in instead →</a></div>
+          <button class="su-btn" onclick="suNext(1)">Continue →</button>
+          <div class="auth-switch">Already have an account? <a href="#" onclick="showPage('login')">Log in →</a></div>
+        </div>
+        <div class="signup-step" id="step-2" style="display:none">
+          <h2 class="su-title">Who are you?</h2>
+          <p class="su-sub">Your dashboard will be tailored to your role</p>
+          <div class="role-cards">
+            <div class="role-card" id="role-pro" onclick="selectRole('professional')"><div class="role-icon">⚖️</div><strong>Law Professional</strong><p>Advocate, Judge, Legal Researcher, Law Student</p><div class="role-check">✓</div></div>
+            <div class="role-card" id="role-pub" onclick="selectRole('public')"><div class="role-icon">👤</div><strong>General Public</strong><p>Citizen seeking legal guidance or awareness</p><div class="role-check">✓</div></div>
+          </div>
+          <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(2)">← Back</button><button class="su-btn" onclick="suNext(2)">Continue →</button></div>
+        </div>
+        <div class="signup-step" id="step-3" style="display:none">
+          <h2 class="su-title">Preferred Language</h2>
+          <p class="su-sub">Case summaries translate in real-time via Sarvam AI</p>
+          <div class="lang-grid">
+            <div class="lang-opt selected" onclick="selectLang(this,'English','en-IN')"><span>🇬🇧</span>English</div>
+            <div class="lang-opt" onclick="selectLang(this,'Hindi','hi-IN')"><span>🇮🇳</span>हिन्दी</div>
+            <div class="lang-opt" onclick="selectLang(this,'Tamil','ta-IN')"><span>🏛</span>தமிழ்</div>
+            <div class="lang-opt" onclick="selectLang(this,'Telugu','te-IN')"><span>🌿</span>తెలుగు</div>
+            <div class="lang-opt" onclick="selectLang(this,'Kannada','kn-IN')"><span>🌺</span>ಕನ್ನಡ</div>
+            <div class="lang-opt" onclick="selectLang(this,'Bengali','bn-IN')"><span>📖</span>বাংলা</div>
+            <div class="lang-opt" onclick="selectLang(this,'Marathi','mr-IN')"><span>🎭</span>मराठी</div>
+            <div class="lang-opt" onclick="selectLang(this,'Gujarati','gu-IN')"><span>🌸</span>ગુજરાતી</div>
+          </div>
+          <div id="sarvam-status-note" class="sarvam-note"></div>
+          <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(3)">← Back</button><button class="su-btn" onclick="suSubmit()">Create Account →</button></div>
+        </div>
+        <div class="signup-step" id="step-success" style="display:none">
+          <div class="su-success">
+            <div class="su-success-ring"><span>✓</span></div>
+            <h2>Welcome to NyayaMind!</h2>
+            <p id="su-welcome-msg"></p>
+            <button class="su-btn" onclick="goToDashboard()" style="margin-top:24px">Go to My Dashboard →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= CASES ======= -->
+
+<!-- ======= COMPARE PAGE ======= -->
+<section id="page-compare" class="page">
+  <div class="page-inner">
+    <div class="compare-page-header">
+      <div>
+        <h1 class="cases-title">⚖ Case Comparison</h1>
+        <p class="cases-sub">Select up to 3 cases from Search Cases and compare them side-by-side</p>
+      </div>
+      <button class="compare-page-cta" onclick="showPage('dashboard')">+ Add Cases to Compare →</button>
+    </div>
+    <div id="compare-empty-state" class="compare-empty-state">
+      <div class="ces-icon">⚖</div>
+      <h2>No Cases Selected Yet</h2>
+      <p>Go to <strong>Search Cases</strong> and click the <strong>⊕ Compare</strong> button on any case card to add it here.</p>
+      <button class="btn-primary" onclick="showPage('dashboard')" style="margin-top:24px">Browse Cases →</button>
+    </div>
+    <div id="compare-active-view" style="display:none">
+      <div class="compare-controls-bar">
+        <div class="ccb-left">
+          <span id="compare-count-label" class="compare-count-label"></span>
+          <span class="compare-hint">Select up to 3 cases for comparison</span>
+        </div>
+        <div class="ccb-right">
+          <button class="compare-clear-btn" onclick="clearAllCompare()">✕ Clear All</button>
+          <button class="compare-run-btn" id="compare-run-btn" onclick="runComparison()">Run Comparison →</button>
+        </div>
+      </div>
+      <div id="compare-chips-row" class="compare-chips-row"></div>
+      <div id="compare-results" class="compare-results"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= DOC PARSER PAGE ======= -->
+<section id="page-docparser" class="page">
+  <div class="page-inner">
+
+    <div class="dp-hero">
+      <div class="dp-hero-icon">📄</div>
+      <h1 class="dp-hero-title">AI Document Parser</h1>
+      <p class="dp-hero-sub">Upload any legal document — FIR, judgment, contract, notice, or petition — and get instant AI-powered analysis, plain-language summary, and Q&amp;A.</p>
+      <div class="dp-supported-chips">
+        <span class="dp-chip">📄 PDF</span>
+        <span class="dp-chip">📝 TXT</span>
+        <span class="dp-chip">📋 DOCX</span>
+        <span class="dp-chip">🖼 PNG / JPG</span>
+      </div>
+    </div>
+
+    <!-- Upload zone -->
+    <div class="dp-upload-zone" id="dp-upload-zone"
+         ondragover="dpDragOver(event)" ondragleave="dpDragLeave(event)" ondrop="dpDrop(event)"
+         onclick="document.getElementById('dp-file-input').click()">
+      <input type="file" id="dp-file-input" accept=".pdf,.txt,.docx,.doc,.png,.jpg,.jpeg,.webp"
+             style="display:none" onchange="dpFileSelected(event)" />
+      <div class="dp-drop-icon">⬆</div>
+      <p class="dp-drop-title">Drop your document here</p>
+      <p class="dp-drop-sub">or click to browse — PDF, TXT, DOCX, PNG, JPG supported · Max 10 MB</p>
+    </div>
+
+    <!-- File loaded state -->
+    <div class="dp-file-loaded" id="dp-file-loaded" style="display:none">
+      <div class="dp-file-info">
+        <div class="dp-file-icon-wrap" id="dp-file-icon-wrap">📄</div>
+        <div class="dp-file-meta">
+          <strong id="dp-file-name">document.pdf</strong>
+          <span id="dp-file-size">0 KB</span>
+        </div>
+        <button class="dp-remove-btn" onclick="dpReset()" title="Remove file">✕</button>
+      </div>
+
+      <!-- Analysis mode selector -->
+      <div class="dp-mode-row">
+        <p class="dp-mode-label">Choose analysis type:</p>
+        <div class="dp-mode-chips">
+          <button class="dp-mode-chip active" data-mode="summary" onclick="dpSelectMode(this,'summary')">📋 Full Summary</button>
+          <button class="dp-mode-chip" data-mode="keypoints" onclick="dpSelectMode(this,'keypoints')">🔑 Key Points</button>
+          <button class="dp-mode-chip" data-mode="legal" onclick="dpSelectMode(this,'legal')">⚖️ Legal Analysis</button>
+          <button class="dp-mode-chip" data-mode="risks" onclick="dpSelectMode(this,'risks')">⚠️ Risk Flags</button>
+          <button class="dp-mode-chip" data-mode="plain" onclick="dpSelectMode(this,'plain')">💬 Plain English</button>
+        </div>
+      </div>
+
+      <button class="dp-analyse-btn" id="dp-analyse-btn" onclick="dpAnalyse()">
+        <span id="dp-analyse-btn-text">🤖 Analyse Document</span>
+      </button>
+    </div>
+
+    <!-- Analysis in progress -->
+    <div class="dp-loading" id="dp-loading" style="display:none">
+      <div class="dp-loading-ring"></div>
+      <p class="dp-loading-text" id="dp-loading-text">Reading document…</p>
+    </div>
+
+    <!-- Results panel -->
+    <div class="dp-results" id="dp-results" style="display:none">
+
+      <!-- Result header -->
+      <div class="dp-results-header">
+        <div class="dp-results-title-row">
+          <span class="dp-results-icon">✅</span>
+          <div>
+            <h2 class="dp-results-title">Analysis Complete</h2>
+            <p class="dp-results-sub" id="dp-results-sub">Full Summary · <span id="dp-result-filename"></span></p>
+          </div>
+        </div>
+        <button class="dp-new-btn" onclick="dpReset()">+ New Document</button>
+      </div>
+
+      <!-- AI output -->
+      <div class="dp-output" id="dp-output"></div>
+
+      <!-- Follow-up Q&A -->
+      <div class="dp-qa-section">
+        <h3 class="dp-qa-title">💬 Ask a Question About This Document</h3>
+        <p class="dp-qa-sub">Have doubts? Ask anything about the document and get an instant answer.</p>
+        <div class="dp-qa-chips" id="dp-qa-chips">
+          <span class="dp-qa-chip" onclick="dpUseChip(this)">What are the parties involved?</span>
+          <span class="dp-qa-chip" onclick="dpUseChip(this)">What is the main legal issue?</span>
+          <span class="dp-qa-chip" onclick="dpUseChip(this)">What are my rights here?</span>
+          <span class="dp-qa-chip" onclick="dpUseChip(this)">What should I do next?</span>
+          <span class="dp-qa-chip" onclick="dpUseChip(this)">Explain in simple Hindi</span>
+        </div>
+        <div class="dp-qa-input-row">
+          <input type="text" id="dp-qa-input" class="dp-qa-input"
+                 placeholder="Ask anything about this document…"
+                 onkeydown="if(event.key==='Enter')dpAskQuestion()" />
+          <button class="dp-qa-send-btn" onclick="dpAskQuestion()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="dp-qa-thread" id="dp-qa-thread"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ======= DASHBOARD ======= -->
+<section id="page-dashboard" class="page">
+  <div id="dash-pro" style="display:none">
+    <div class="dash-hero-spacer"></div>
+    <div class="dash-content-wrapper">
+      <div class="page-inner" style="padding-bottom: 20px;">
+      <div class="dash-header">
+        <div>
+          <div class="dash-role-badge pro-badge">⚖️ Law Professional</div>
+          <h1 class="dash-title" id="dash-pro-greeting">Welcome back</h1>
+          <p class="dash-subtitle" id="dash-pro-lang"></p>
+        </div>
+      <div class="cases-hero" style="margin-top: 20px; text-align: center;">
+        <div class="search-bar-wrap">
+          <div class="search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1014 15.5l.27.28v.79l5 5 1.5-1.5-5-5zM10 15a5 5 0 110-10 5 5 0 010 10z"/></svg>
+            <input type="text" id="searchInput" placeholder="Search cases, acts, sections... or use 🎤" oninput="filterCases()" />
+            <button class="mic-btn" id="micBtn" onclick="toggleVoiceSearch()" title="Search by voice">🎤</button>
+            <button class="search-btn" onclick="filterCases()">Search</button>
+          </div>
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setFilter('Supreme Court', this)">Supreme Court</button>
+          <button class="filter-btn" onclick="setFilter('High Court', this)">High Court</button>
+          <button class="filter-btn" onclick="setFilter('Criminal', this)">Criminal</button>
+          <button class="filter-btn" onclick="setFilter('Civil', this)">Civil</button>
+        </div>
+      </div>
+      <div id="case-count" class="case-count">Showing cases</div>
+      </div>
+      <div id="gallery-container" style="width: 100%; height: 500px; margin-top: 20px; margin-bottom: 40px;"></div>
+      <div class="page-inner" style="padding-top: 0;">
+      <div id="active-case-board" class="active-case-board"></div>
+      <!-- DEPARTMENTAL BLOCKS -->
+      <div class="dept-section">
+        <div class="dept-section-header">
+          <h3 class="dept-section-title">⚖️ Practice Areas</h3>
+          <p class="dept-section-sub">Browse cases by department — click any block to explore relevant judgments</p>
+        </div>
+        <div class="dept-grid">
+          <div class="dept-block dept-criminal" onclick="openDept('criminal_law')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-bail" onclick="openDept('bail_pretrial')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-property" onclick="openDept('property_land')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-economic" onclick="openDept('economic_offences')" tabindex="0" role="button" aria-label="Economic Offences"></div>
+          <div class="dept-block dept-pil" onclick="openDept('pil_environment')" tabindex="0" role="button" aria-label="PIL and Environmental"></div>
+          <div class="dept-block dept-civil" onclick="openDept('civil_litigation')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-family" onclick="openDept('family_law')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-medical" onclick="openDept('medical_malpractice')" tabindex="0" role="button"></div>
+          <div class="dept-block dept-corporate" onclick="openDept('corporate_commercial')" tabindex="0" role="button"></div>
+        </div>
+      </div>
+      </div>
+      <div class="dash-grid pro-grid" style="margin-top: 40px;">
+        <div class="dash-card pro-card-accent"><div class="dash-card-icon">📁</div><p>Cases Indexed</p><h2>10,248</h2><div class="dash-card-bar"><div style="width:85%"></div></div><div class="dash-card-trend">+124 this week</div></div>
+        <div class="dash-card"><div class="dash-card-icon">🔍</div><p>Research Queries</p><h2>342</h2><div class="dash-card-bar"><div style="width:55%"></div></div><div class="dash-card-trend">Active today</div></div>
+        <div class="dash-card"><div class="dash-card-icon">🔖</div><p>Bookmarks</p><h2 id="pro-stat-bookmarks">0</h2><div class="dash-card-bar"><div id="pro-bm-bar" style="width:0%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">🏛</div><p>Courts Covered</p><h2>50+</h2><div class="dash-card-bar"><div style="width:100%"></div></div><div class="dash-card-trend">SC · HC · District</div></div>
+        <div class="dash-card"><div class="dash-card-icon">📊</div><p>Cases Reviewed</p><h2 id="pro-stat-history">0</h2><div class="dash-card-bar"><div id="pro-hist-bar" style="width:0%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">👍</div><p>Useful Votes</p><h2 id="pro-stat-useful">0</h2><div class="dash-card-bar"><div id="pro-useful-bar" style="width:0%"></div></div><div class="dash-card-trend">Helpful feedback given</div></div>
+      </div>
+      <div class="activity-panel"><h3>Recent Activity</h3><div id="pro-activity-feed"></div></div>
+    </div>
+    </div>
+  </div>
+  <div id="dash-pub" style="display:none">
+    <div class="page-inner">
+      <div class="dash-header">
+        <div>
+          <div class="dash-role-badge pub-badge">👤 General Public</div>
+          <h1 class="dash-title" id="dash-pub-greeting">Welcome to NyayaMind</h1>
+          <p class="dash-subtitle" id="dash-pub-lang"></p>
+        </div>
+        <div class="dash-quick-actions">
+          <button class="dqa-btn" onclick="showPage('cases')">🔍 Find a Case</button>
+          <button class="dqa-btn" onclick="showPage('compare')">⚖ Compare Cases</button>
+        </div>
+      </div>
+      <div class="pub-hero-bar">
+        <div class="pub-hero-text"><h2>Know Your Rights</h2><p>NyayaMind makes Indian law accessible to every citizen.</p></div>
+        <button class="pub-explore-btn" onclick="showPage('cases')">Explore Cases →</button>
+      </div>
+      <div class="dash-grid pub-grid">
+        <div class="dash-card pub-card"><div class="pub-card-icon">👁</div><p>Cases You've Viewed</p><h2 id="pub-stat-history">0</h2><div class="dash-card-bar"><div id="pub-hist-bar" style="width:0%"></div></div></div>
+        <div class="dash-card pub-card"><div class="pub-card-icon">🔖</div><p>Saved Cases</p><h2 id="pub-stat-bookmarks">0</h2><div class="dash-card-bar"><div id="pub-bm-bar" style="width:0%"></div></div></div>
+        <div class="dash-card pub-card"><div class="pub-card-icon">👍</div><p>Useful Votes</p><h2 id="pub-stat-useful">0</h2><div class="dash-card-bar"><div id="pub-useful-bar" style="width:0%"></div></div></div>
+      </div>
+      <div class="pub-learn-section">
+        <h3>🏛️ Start Learning</h3>
+        <div class="pub-topic-grid">
+          <div class="pub-topic" onclick="goSearch('fundamental rights')"><span>🛡️</span><strong>Fundamental Rights</strong><p>What rights does the Constitution guarantee you?</p></div>
+          <div class="pub-topic" onclick="goSearch('women rights')"><span>⚖️</span><strong>Women's Rights</strong><p>Key judgments protecting women under Indian law</p></div>
+          <div class="pub-topic" onclick="goSearch('privacy')"><span>🔒</span><strong>Right to Privacy</strong><p>How the Supreme Court secured your digital privacy</p></div>
+          <div class="pub-topic" onclick="goSearch('environment')"><span>🌿</span><strong>Environment & Law</strong><p>Landmark cases protecting India's natural resources</p></div>
+          <div class="pub-topic" onclick="goSearch('article 21')"><span>🤝</span><strong>Right to Life</strong><p>Article 21 and the right to live with dignity</p></div>
+          <div class="pub-topic" onclick="goSearch('freedom of speech')"><span>🗣️</span><strong>Freedom of Speech</strong><p>Cases defining free expression in India</p></div>
+        </div>
+      </div>
+      <div class="activity-panel"><h3>Your Recent Activity</h3><div id="pub-activity-feed"></div></div>
+    </div>
+  </div>
+  <div id="dash-default">
+    <div class="page-inner">
+      <h1 class="dash-title">Live System Dashboard</h1>
+      <div class="dash-grid">
+        <div class="dash-card"><div class="dash-card-icon">📁</div><p>Total Cases</p><h2>10,248</h2><div class="dash-card-bar"><div style="width:75%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">🔍</div><p>Active Searches</p><h2>342</h2><div class="dash-card-bar"><div style="width:45%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">👥</div><p>Users Online</p><h2>89</h2><div class="dash-card-bar"><div style="width:30%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">🔖</div><p>Bookmarks Saved</p><h2 id="stat-bookmarks">0</h2><div class="dash-card-bar"><div id="bm-bar" style="width:0%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">🕒</div><p>Cases Viewed</p><h2 id="stat-history">0</h2><div class="dash-card-bar"><div id="hist-bar" style="width:0%"></div></div></div>
+        <div class="dash-card"><div class="dash-card-icon">👍</div><p>Useful Votes</p><h2 id="stat-useful">0</h2><div class="dash-card-bar"><div id="useful-bar" style="width:0%"></div></div><div class="dash-card-trend">Total helpful feedback</div></div>
+      </div>
+      <div class="dash-login-prompt">
+        <div class="dlp-inner">
+          <span>🔓</span>
+          <h3>Sign up to get a personalised dashboard</h3>
+          <p>Track your cases, get role-specific tools, and unlock AI-powered features</p>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+            <button class="su-btn" onclick="showPage('signup')" style="max-width:200px;display:block">Create Account →</button>
+            <button class="su-btn-ghost" onclick="showPage('login')">Log In</button>
+          </div>
+        </div>
+      </div>
+      <div class="activity-panel"><h3>Recent Activity</h3><div id="activity-feed"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= BOOKMARKS ======= -->
+<section id="page-bookmarks" class="page">
+  <div class="page-inner">
+    <h1 class="section-title">🔖 Bookmarks</h1>
+    <div id="bm-menu">
+      <div class="option-card" onclick="bmOpen('bm-saved')">📌 Saved Cases <span>›</span></div>
+      <div class="option-card" onclick="bmOpen('bm-search-sec')">🔍 Search Bookmarks <span>›</span></div>
+      <div class="option-card" onclick="bmOpen('bm-stats')">📊 Stats <span>›</span></div>
+      <div class="option-card" onclick="bmOpen('bm-manage')">🧹 Manage <span>›</span></div>
+    </div>
+    <div id="bm-saved" class="sub-section"><div class="back-btn" onclick="bmBack('bm-menu')">← Back</div><h2>Saved Cases</h2><div id="bm-list"></div></div>
+    <div id="bm-search-sec" class="sub-section"><div class="back-btn" onclick="bmBack('bm-menu')">← Back</div><h2>Search Bookmarks</h2><input class="sub-input" id="bm-search-input" oninput="bmSearch()" placeholder="Search saved cases..."/><div id="bm-search-results"></div></div>
+    <div id="bm-stats" class="sub-section"><div class="back-btn" onclick="bmBack('bm-menu')">← Back</div><h2>Stats</h2><div class="info-card" id="bm-stats-box"></div></div>
+    <div id="bm-manage" class="sub-section"><div class="back-btn" onclick="bmBack('bm-menu')">← Back</div><h2>Manage Bookmarks</h2><button class="danger-btn" onclick="clearBookmarks()">🗑️ Clear All Bookmarks</button></div>
+  </div>
+</section>
+
+<!-- ======= HISTORY ======= -->
+<section id="page-history" class="page">
+  <div class="page-inner">
+    <h1 class="section-title">🕒 History</h1>
+    <div id="hist-menu">
+      <div class="option-card" onclick="histOpen('hist-viewed')">📂 Viewed Cases <span>›</span></div>
+      <div class="option-card" onclick="histOpen('hist-search')">🔍 Search History <span>›</span></div>
+      <div class="option-card" onclick="histOpen('hist-today')">📅 Today's Activity <span>›</span></div>
+      <div class="option-card" onclick="histOpen('hist-week')">📊 This Week <span>›</span></div>
+      <div class="option-card" onclick="histOpen('hist-clear')">🗑️ Clear History <span>›</span></div>
+    </div>
+    <div id="hist-viewed" class="sub-section"><div class="back-btn" onclick="histBack('hist-menu')">← Back</div><h2>Viewed Cases</h2><div id="hist-viewed-list"></div></div>
+    <div id="hist-search" class="sub-section"><div class="back-btn" onclick="histBack('hist-menu')">← Back</div><h2>Search History</h2><div id="hist-search-list"></div></div>
+    <div id="hist-today" class="sub-section"><div class="back-btn" onclick="histBack('hist-menu')">← Back</div><h2>Today's Activity</h2><div id="hist-today-list"></div></div>
+    <div id="hist-week" class="sub-section"><div class="back-btn" onclick="histBack('hist-menu')">← Back</div><h2>This Week</h2><div id="hist-week-list"></div></div>
+    <div id="hist-clear" class="sub-section"><div class="back-btn" onclick="histBack('hist-menu')">← Back</div><h2>Clear History</h2><div class="clear-buttons"><button class="danger-btn" onclick="clearViewed()">Clear Viewed Cases</button><button class="danger-btn" onclick="clearSearchHist()">Clear Search History</button><button class="danger-btn" onclick="clearAllHist()">Clear Everything</button></div></div>
+  </div>
+</section>
+
+<!-- ======= PROFILE ======= -->
+<section id="page-profile" class="page">
+  <div class="page-inner">
+    <h1 class="section-title">👤 Profile</h1>
+    <div class="profile-hero-card" id="profile-hero-card">
+      <div class="profile-avatar-wrap"><div class="profile-avatar-ring"></div><div class="profile-avatar" id="profile-avatar-initials"></div></div>
+      <div class="profile-hero-info">
+        <h2 id="profile-name-display">—</h2>
+        <p id="profile-email-display" class="profile-email"></p>
+        <div id="profile-role-badge" class="profile-role-badge"></div>
+      </div>
+      <div class="profile-hero-stats">
+        <div class="phs-item"><span id="phs-bookmarks">0</span><p>Bookmarks</p></div>
+        <div class="phs-divider"></div>
+        <div class="phs-item"><span id="phs-history">0</span><p>Viewed</p></div>
+        <div class="phs-divider"></div>
+        <div class="phs-item"><span id="phs-useful">0</span><p>Useful Votes</p></div>
+      </div>
+    </div>
+    <div id="profile-guest-msg" class="dash-login-prompt" style="display:none">
+      <div class="dlp-inner"><span>👤</span><h3>Sign in to view your profile</h3><p>Create an account or log in to manage your settings.</p><div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="su-btn" onclick="showPage('signup')" style="max-width:200px">Create Account →</button><button class="su-btn-ghost" onclick="showPage('login')">Log In</button></div></div>
+    </div>
+    <div id="profile-settings" style="display:none">
+      <h2 class="profile-section-heading">⚙️ Settings</h2>
+      <div id="prof-menu">
+        <div class="option-card" onclick="profOpen('prof-account')">🧑 Account Information <span>›</span></div>
+        <div class="option-card" onclick="profOpen('prof-language')">🌐 Language & Translation <span>›</span></div>
+        <div class="option-card" onclick="profOpen('prof-notifications')">🔔 Notifications <span>›</span></div>
+        <div class="option-card" onclick="profOpen('prof-privacy')">🔒 Privacy & Data <span>›</span></div>
+        <div class="option-card" onclick="profOpen('prof-appearance')">🎨 Appearance <span>›</span></div>
+        <div class="option-card" onclick="profOpen('prof-about')">ℹ️ About NyayaMind <span>›</span></div>
+        <div class="profile-signout-wrap"><button class="profile-signout-btn" onclick="confirmLogout()"><span>🚪</span> Sign Out</button><p class="profile-signout-note">You'll be redirected to the login screen</p></div>
+      </div>
+      <div id="prof-account" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Account Information</h2><div class="profile-form-card"><div class="su-field"><label>Full Name</label><input type="text" id="prof-name-input" placeholder="Your full name" /></div><div class="su-field"><label>Email Address</label><input type="email" id="prof-email-input" placeholder="your@email.com" disabled style="opacity:0.5;cursor:not-allowed" /><span style="font-size:11px;color:var(--text-dim);margin-top:4px;display:block">Email cannot be changed</span></div><div class="su-field"><label>Role</label><div id="prof-role-display" class="profile-info-value"></div></div><div class="su-field"><label>Member Since</label><div id="prof-joined-display" class="profile-info-value"></div></div><button class="su-btn" style="margin-top:8px" onclick="saveProfileInfo()">Save Changes</button><div id="prof-save-msg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);color:#4ade80;font-size:13px">✅ Profile updated successfully</div></div></div>
+      <div id="prof-language" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Language & Translation</h2><div class="profile-form-card"><p style="font-size:14px;color:var(--text-muted);margin-bottom:20px">Choose your preferred language for case summaries.</p><div class="lang-grid" id="prof-lang-grid"><div class="lang-opt" onclick="setProfLang(this,'English','en-IN')"><span>🇬🇧</span>English</div><div class="lang-opt" onclick="setProfLang(this,'Hindi','hi-IN')"><span>🇮🇳</span>हिन्दी</div><div class="lang-opt" onclick="setProfLang(this,'Tamil','ta-IN')"><span>🏛</span>தமிழ்</div><div class="lang-opt" onclick="setProfLang(this,'Telugu','te-IN')"><span>🌿</span>తెలుగు</div><div class="lang-opt" onclick="setProfLang(this,'Kannada','kn-IN')"><span>🌺</span>ಕನ್ನಡ</div><div class="lang-opt" onclick="setProfLang(this,'Bengali','bn-IN')"><span>📖</span>বাংলা</div><div class="lang-opt" onclick="setProfLang(this,'Marathi','mr-IN')"><span>🎭</span>मराठी</div><div class="lang-opt" onclick="setProfLang(this,'Gujarati','gu-IN')"><span>🌸</span>ગુજરાતી</div></div><div style="margin-top:20px"><label class="su-field" style="display:block"><span style="display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Sarvam AI API Key</span><input type="text" id="prof-sarvam-key" placeholder="Enter or update your Sarvam API key…" style="width:100%;padding:13px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-primary);font-size:14px;font-family:inherit;outline:none;transition:.25s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor=''" /></label><button class="su-btn" style="margin-top:12px" onclick="updateSarvamKeyFromProfile()">Update API Key</button><div id="prof-sarvam-msg" style="display:none;margin-top:10px;font-size:13px"></div></div></div></div>
+      <div id="prof-notifications" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Notifications</h2><div class="profile-form-card"><div class="prof-toggle-row"><div class="ptr-info"><strong>Case Updates</strong><p>Get notified when new landmark cases are added</p></div><label class="prof-toggle"><input type="checkbox" id="notif-cases" checked onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>AI Query Alerts</strong><p>Receive alerts when AI processes important queries</p></div><label class="prof-toggle"><input type="checkbox" id="notif-ai" onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Weekly Digest</strong><p>A weekly summary of top legal developments</p></div><label class="prof-toggle"><input type="checkbox" id="notif-digest" checked onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Bookmark Reminders</strong><p>Remind me to review saved cases periodically</p></div><label class="prof-toggle"><input type="checkbox" id="notif-bookmark" onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div></div></div>
+      <div id="prof-privacy" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Privacy & Data</h2><div class="profile-form-card"><div class="prof-toggle-row"><div class="ptr-info"><strong>Save Search History</strong><p>Store your search queries for quick access later</p></div><label class="prof-toggle"><input type="checkbox" id="priv-search-hist" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Save Case History</strong><p>Keep a log of cases you've viewed</p></div><label class="prof-toggle"><input type="checkbox" id="priv-case-hist" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Analytics & Improvement</strong><p>Help improve NyayaMind with anonymised usage data</p></div><label class="prof-toggle"><input type="checkbox" id="priv-analytics" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)"><h4 style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:14px;letter-spacing:.08em">Danger Zone</h4><div style="display:flex;flex-direction:column;gap:10px"><button class="danger-btn" onclick="clearAllHist()">🗑️ Clear All History</button><button class="danger-btn" onclick="clearBookmarks()">🗑️ Clear All Bookmarks</button></div></div></div></div>
+      <div id="prof-appearance" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Appearance</h2><div class="profile-form-card"><div class="su-field"><label>Theme</label><div class="prof-theme-options"><div class="prof-theme-opt selected" id="theme-dark" onclick="setTheme('dark',this)"><div class="pto-preview dark-preview"></div><span>Dark (Default)</span></div><div class="prof-theme-opt" id="theme-dim" onclick="setTheme('dim',this)"><div class="pto-preview dim-preview"></div><span>Dim</span></div></div></div><div class="prof-toggle-row" style="margin-top:16px"><div class="ptr-info"><strong>Reduce Animations</strong><p>Minimise motion for better accessibility</p></div><label class="prof-toggle"><input type="checkbox" id="pref-reduce-motion" onchange="applyReduceMotion()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Compact Mode</strong><p>Show more content with reduced spacing</p></div><label class="prof-toggle"><input type="checkbox" id="pref-compact" onchange="applyCompactMode()"><span class="prof-toggle-slider"></span></label></div></div></div>
+      <div id="prof-about" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>About NyayaMind</h2><div class="profile-form-card"><div class="about-info-row"><span class="air-label">Version</span><span class="air-value">1.2.0</span></div><div class="about-info-row"><span class="air-label">Cases Indexed</span><span class="air-value">10,248+</span></div><div class="about-info-row"><span class="air-label">Courts Covered</span><span class="air-value">50+</span></div><div class="about-info-row"><span class="air-label">AI Model</span><span class="air-value">Claude + Sarvam AI</span></div><div class="about-info-row"><span class="air-label">Last Updated</span><span class="air-value">April 2026</span></div><div style="margin-top:24px;padding:18px 20px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(201,168,76,0.2)"><p style="font-size:13px;color:var(--text-muted);line-height:1.7">NyayaMind is built to democratise access to Indian legal knowledge using AI.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= DEPARTMENT PAGE OVERLAY ======= -->
+<div id="dept-page" class="dept-page-overlay">
+  <div class="dept-page-inner">
+    <div class="dept-page-header">
+      <div class="dept-page-back" onclick="closeDeptPage()"><span class="dpb-arrow">←</span><span>Back to Dashboard</span></div>
+      <div class="dept-page-title-wrap"><span class="dept-page-icon" id="dept-page-icon">⚖️</span><div><h1 class="dept-page-title" id="dept-page-title">Department</h1><p class="dept-page-subtitle" id="dept-page-subtitle">Cases in this practice area</p></div></div>
+      <div class="dept-page-actions">
+        <button class="dept-filter-all active" id="dept-filter-all" onclick="deptSetSort('relevance', this)">Most Relevant</button>
+        <button class="dept-filter-all" onclick="deptSetSort('year_desc', this)">Newest</button>
+        <button class="dept-filter-all" onclick="deptSetSort('year_asc', this)">Oldest</button>
+      </div>
+    </div>
+    <div id="dept-cases-count" class="dept-cases-count"></div>
+    <div id="dept-cases-grid" class="dept-cases-grid"></div>
+  </div>
+</div>
+
+<!-- ======= CASE MODAL (Removed) ======= -->
+
+<!-- ======= COMPARE TRAY (Removed) ======= -->
+
+<!-- TRANSLATION TOAST -->
+<div id="translate-toast" class="translate-toast" style="display:none">
+  <div class="tt-spinner"></div>
+  <span id="translate-toast-msg">Translating via Sarvam AI…</span>
+</div>
+
+<!-- VOICE TOAST (Removed) -->
+<!-- AI MODAL (Removed) -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script type="module" src="threads.js"></script>
+<script type="module" src="gallery.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
