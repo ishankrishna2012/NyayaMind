@@ -8,15 +8,15 @@ const { createClient } = require('@supabase/supabase-js');
 const { OpenAI } = require('openai');
 
 // ── Clients ──────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+const openaiApiKey = process.env.OPENAI_API_KEY || 'placeholder';
+const openai = new OpenAI({ apiKey: openaiApiKey });
 
 // ── CORS headers ─────────────────────────────────────────────
 const CORS = {

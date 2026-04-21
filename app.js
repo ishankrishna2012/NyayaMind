@@ -770,13 +770,17 @@ async function doLogin() {
     // Successful login
     console.log('[Login] Login successful, user:', data?.user?.email);
     
-    // Save user locally
+    // Save user locally with role from user metadata
+    const userMetadata = data.user.user_metadata || {};
     saveUser({ 
       email: data.user.email, 
       id: data.user.id,
-      name: data.user.user_metadata?.name || data.user.email 
+      name: userMetadata.name || data.user.email,
+      role: userMetadata.role || 'public', // Default to public if not set
+      language: userMetadata.language || 'en'
     });
     
+    console.log('[Login] User saved with role:', userMetadata.role || 'public');
     console.log('[Login] Redirecting to dashboard...');
     showPage('dashboard');
     
