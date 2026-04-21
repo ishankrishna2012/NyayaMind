@@ -8,14 +8,14 @@ const { createClient } = require('@supabase/supabase-js');
 const { OpenAI } = require('openai');
 
 // ── Clients ──────────────────────────────────────────────────
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://bpeokbocsxijbjnbtivp.supabase.co';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const openaiApiKey = process.env.OPENAI_API_KEY || 'placeholder';
+const openaiApiKey = process.env.OPENAI_API_KEY || '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';
 const openai = new OpenAI({ apiKey: openaiApiKey });
 
 // ── CORS headers ─────────────────────────────────────────────
@@ -68,8 +68,8 @@ exports.handler = async (event) => {
       return json(200, { success: true, total: data.length, cases: data });
     } catch (err) {
       try {
-        const qdrantUrl = (process.env.QDRANT_URL || '').replace(/^["']|["']$/g, '');
-        const qdrantKey = (process.env.QDRANT_API_KEY || '').replace(/^["']|["']$/g, '');
+        const qdrantUrl = (process.env.QDRANT_URL || 'https://27d551b6-c3b1-43c9-bf03-8551f9648f2f.europe-west3-0.gcp.cloud.qdrant.io').replace(/^["']|["']$/g, '');
+        const qdrantKey = (process.env.QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6OGM5ZDhiMWYtYTdmMC00NjRjLTliNjMtZWI3ZGVjYjg2ODk0In0.Bce4VNx_ABmlVEiL5GiDz5eTsZRyHjgE-ATE8-Gmn7g').replace(/^["']|["']$/g, '');
         const collection = (process.env.QDRANT_COLLECTION || 'Court Orders').replace(/^["']|["']$/g, '');
         if (!qdrantUrl || !qdrantKey) throw new Error("Qdrant not configured");
         
@@ -218,7 +218,7 @@ exports.handler = async (event) => {
         method: 'POST',
         headers: {
           'Accept': 'audio/mpeg',
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'xi-api-key': process.env.ELEVENLABS_API_KEY || 'sk_300d3e020f79917db233a0583a0239a30d734d9705581625',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
