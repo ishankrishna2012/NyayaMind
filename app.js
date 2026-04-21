@@ -17,21 +17,80 @@ let _casesFetchInterval = null;
 
 const SUPABASE_URL = 'https://bpeokbocsxijbjnbtivp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_YZ84jwL7tJDZFSciVGXwbw_mKrWZCfB';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabaseClient = window._supabase;
+if (!supabaseClient && window.supabase && window.supabase.createClient) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window._supabase = supabaseClient;
+}
 
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
-    if (profile) {
-      const userObj = { ...profile, email: session.user.email };
-      saveUser(userObj);
-      updateNavForUser(userObj);
-    }
-  } else {
-    saveUser(null);
-    updateNavForUser(null);
+// ================================================
+// CRITICAL PAGE NAVIGATION - DEFINE EARLY
+// ================================================
+function showPage(name) {
+  if (typeof document === 'undefined') return false;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const page = document.getElementById('page-' + name); 
+  if (page) page.classList.add('active');
+  const link = document.querySelector(`.nav-links a[data-page="${name}"]`); 
+  if (link) link.classList.add('active');
+
+  const robotLayer = document.getElementById('robot-bg-layer');
+  if (robotLayer) robotLayer.classList.toggle('active', name === 'signup' || name === 'login');
+
+  if (name === 'home' && typeof initTypewriter !== 'undefined') initTypewriter();
+  if (name === 'compare' && typeof renderComparePage !== 'undefined') renderComparePage();
+  if (name === 'dashboard' && typeof initDashboard !== 'undefined') {
+    initDashboard();
+    if (typeof filterCases !== 'undefined') filterCases();
+    const dashPage = document.getElementById('page-dashboard');
+    const currentUser = getUser();
+    if (dashPage) dashPage.classList.toggle('law-firm-view', !!(currentUser && currentUser.role === 'professional'));
   }
-});
+  if (name === 'bookmarks' && typeof bmBack !== 'undefined') bmBack('bm-menu');
+  if (name === 'history' && typeof histBack !== 'undefined') { 
+    histBack('hist-menu');
+    if (typeof loadAllHistory !== 'undefined') loadAllHistory();
+  }
+  if (name === 'login' && typeof initLoginPage !== 'undefined') initLoginPage();
+  if (name === 'signup' && typeof initSignupPage !== 'undefined') initSignupPage();
+  if (name === 'profile' && typeof initProfilePage !== 'undefined') initProfilePage();
+  if (name === 'docparser' && typeof initDocParser !== 'undefined') initDocParser();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return false;
+}
+
+function closeMobile() {
+  const mobileMenu = document.getElementById('mobile-menu');
+  if (mobileMenu) mobileMenu.classList.remove('active');
+  return false;
+}
+
+function logout() {
+  if (supabaseClient && supabaseClient.auth) {
+    supabaseClient.auth.signOut().catch(e => console.warn('Logout error:', e));
+  }
+  saveUser(null);
+  localStorage.removeItem('nyayaUser');
+  if (typeof updateNavForUser !== 'undefined') updateNavForUser(null);
+  showPage('login');
+}
+
+if (supabase && supabase.auth) {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+      if (profile) {
+        const userObj = { ...profile, email: session.user.email };
+        saveUser(userObj);
+        if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
+      }
+    } else {
+      saveUser(null);
+      if (typeof updateNavForUser !== 'undefined') updateNavForUser(null);
+    }
+  });
+}
 
 async function loadCasesFromBackend(query = '', filter = 'all') {
   try {
@@ -570,37 +629,8 @@ function saveUser(u) { localStorage.setItem('nyayaUser', JSON.stringify(u)); }
 
 
 // ================================================
-// PAGE NAVIGATION
+// PAGE NAVIGATION (Duplicates removed - defined at top of file)
 // ================================================
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const page = document.getElementById('page-' + name); if (page) page.classList.add('active');
-  const link = document.querySelector(`.nav-links a[data-page="${name}"]`); if (link) link.classList.add('active');
-
-  // Robot layer: only visible on the General Public signup page
-  const robotLayer = document.getElementById('robot-bg-layer');
-  if (robotLayer) robotLayer.classList.toggle('active', name === 'signup' || name === 'login');
-
-  if (name === 'home') initTypewriter();
-  if (name === 'compare') renderComparePage();
-  if (name === 'dashboard') {
-    initDashboard();
-    filterCases(); // Initializes the gallery with 4 max cases
-    // Apply law-firm background for professional users
-    const dashPage = document.getElementById('page-dashboard');
-    const currentUser = getUser();
-    if (dashPage) dashPage.classList.toggle('law-firm-view', !!(currentUser && currentUser.role === 'professional'));
-  }
-  if (name === 'bookmarks') bmBack('bm-menu');
-  if (name === 'history') { histBack('hist-menu'); loadAllHistory(); }
-  if (name === 'login') initLoginPage();
-  if (name === 'signup') initSignupPage();
-  if (name === 'profile') initProfilePage();
-  if (name === 'docparser') initDocParser();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  return false;
-}
 
 
 // ================================================
@@ -629,11 +659,10 @@ async function doLogin() {
   const errorEl = document.getElementById('login-error');
   if (!email || !email.includes('@')) { showAuthError(errorEl, 'Please enter a valid email address.'); return; }
   if (!password) { showAuthError(errorEl, 'Please enter a password.'); return; }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) { showAuthError(errorEl, error.message); } else { showPage('dashboard'); }
 }
 function showAuthError(el, msg) { if (!el) return; el.innerHTML = msg; el.style.display = 'block'; setTimeout(() => { if (el) el.style.display = 'none'; }, 5000); }
-async function logout() { await supabase.auth.signOut(); saveUser(null); localStorage.removeItem('nyayaUser'); updateNavForUser(null); showPage('login'); }
 function confirmLogout() { if (confirm('Are you sure you want to sign out?')) logout(); }
 function updateNavForUser(user) {
   const guestActions = document.getElementById('nav-guest-actions'); const navUser = document.getElementById('nav-user'); const navUserName = document.getElementById('nav-user-name'); const navAvatar = document.getElementById('nav-user-avatar');
@@ -689,7 +718,7 @@ function selectRole(role) {
 
 async function suSubmit() {
   if (!suData.role) { alert('Please select a role.'); return; }
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email: suData.email,
     password: suData.password,
     options: { data: { name: suData.name, role: suData.role } }
@@ -998,7 +1027,7 @@ async function saveProfileInfo() {
   const user = getUser(); if (!user) return; const nameInput = document.getElementById('prof-name-input'); const newName = nameInput?.value.trim();
   if (!newName) { nameInput.style.borderColor = '#ef4444'; setTimeout(() => nameInput.style.borderColor = '', 1500); return; }
   user.name = newName; saveUser(user);
-  await supabase.from('user_profiles').update({ name: newName }).eq('id', user.id);
+  await supabaseClient.from('user_profiles').update({ name: newName }).eq('id', user.id);
   updateNavForUser(user); document.getElementById('profile-name-display').textContent = newName;
   const initials = newName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); document.getElementById('profile-avatar-initials').textContent = initials;
   const msg = document.getElementById('prof-save-msg'); if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
