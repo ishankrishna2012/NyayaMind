@@ -404,8 +404,14 @@ class App {
       const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
       const hit = this.hitTest(clientX, clientY);
       if (hit) {
-        // Slide to the clicked card
-        this.scroll.target = hit.x - hit.extra;
+        const targetScroll = hit.x - hit.extra;
+        // If already near target scroll, open the case
+        if (Math.abs(this.scroll.target - targetScroll) < 0.1 && window.openCase) {
+          window.openCase(hit.caseData.id);
+        } else {
+          // Slide to the clicked card
+          this.scroll.target = targetScroll;
+        }
       }
     }
   }

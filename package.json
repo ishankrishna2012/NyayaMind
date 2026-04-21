@@ -7,7 +7,22 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["legal", "india", "kanoon", "law", "ai"],
+  "keywords": [
+    "legal",
+    "india",
+    "kanoon",
+    "law",
+    "ai"
+  ],
   "author": "NyayaMind",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.104.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "elevenlabs": "^1.59.0",
+    "express": "^5.2.1",
+    "openai": "^6.34.0",
+    "serverless-http": "^4.0.0"
+  }
 }

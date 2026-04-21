@@ -154,26 +154,13 @@
       </div>
       <div class="signup-pitch">
         <div class="sp-item"><span class="sp-icon">⚖️</span><div><strong>10,000+ Cases</strong><p>Access landmark judgments from every major Indian court</p></div></div>
-        <div class="sp-item"><span class="sp-icon">🌐</span><div><strong>Sarvam AI Translation</strong><p>Real-time translation into 8 Indian languages via Sarvam AI</p></div></div>
+<!-- Removed Sarvam Translation feature pitch -->
         <div class="sp-item"><span class="sp-icon">🛡️</span><div><strong>Role-Based Access</strong><p>Tailored tools for professionals and the public alike</p></div></div>
       </div>
     </div>
     <div class="signup-right">
       <div class="signup-card">
-        <div id="sarvam-key-prompt" class="sarvam-key-box" style="display:none">
-          <div class="sk-icon">🌐</div>
-          <h3>Enable Real Translation</h3>
-          <p>Enter your <a href="https://dashboard.sarvam.ai/" target="_blank">Sarvam AI API key</a> to activate real-time translation.</p>
-          <div class="su-field" style="margin-top:14px">
-            <label>API Subscription Key</label>
-            <input type="text" id="sarvam-api-key-input" placeholder="Enter your Sarvam API key…" />
-          </div>
-          <div id="sarvam-key-error" class="auth-error" style="display:none;margin-bottom:10px"></div>
-          <div class="su-nav">
-            <button class="su-btn-ghost" onclick="skipSarvam()">Skip for now</button>
-            <button class="su-btn" onclick="saveSarvamKey()" style="flex:1">Activate →</button>
-          </div>
-        </div>
+<!-- Removed Sarvam key prompt -->
         <div class="signup-steps">
           <div class="step-dot active" id="sdot-1">1</div><div class="step-line"></div>
           <div class="step-dot" id="sdot-2">2</div><div class="step-line"></div>
@@ -199,7 +186,7 @@
         </div>
         <div class="signup-step" id="step-3" style="display:none">
           <h2 class="su-title">Preferred Language</h2>
-          <p class="su-sub">Case summaries translate in real-time via Sarvam AI</p>
+          <p class="su-sub">Select your preferred language</p>
           <div class="lang-grid">
             <div class="lang-opt selected" onclick="selectLang(this,'English','en-IN')"><span>🇬🇧</span>English</div>
             <div class="lang-opt" onclick="selectLang(this,'Hindi','hi-IN')"><span>🇮🇳</span>हिन्दी</div>
@@ -210,7 +197,7 @@
             <div class="lang-opt" onclick="selectLang(this,'Marathi','mr-IN')"><span>🎭</span>मराठी</div>
             <div class="lang-opt" onclick="selectLang(this,'Gujarati','gu-IN')"><span>🌸</span>ગુજરાતી</div>
           </div>
-          <div id="sarvam-status-note" class="sarvam-note"></div>
+<!-- Removed Sarvam status note -->
           <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(3)">← Back</button><button class="su-btn" onclick="suSubmit()">Create Account →</button></div>
         </div>
         <div class="signup-step" id="step-success" style="display:none">
@@ -431,8 +418,8 @@
     </div>
     </div>
   </div>
-  <div id="dash-pub" style="display:none">
-    <div class="page-inner">
+  <div id="dash-pub" style="display:none; background-image: url('seven jurors background.jpeg'); background-size: cover; background-position: center; min-height: 100vh;">
+    <div class="page-inner" style="background: rgba(0,0,0,0.6); min-height: 100vh; padding-top: 40px;">
       <div class="dash-header">
         <div>
           <div class="dash-role-badge pub-badge">👤 General Public</div>
@@ -442,6 +429,23 @@
         <div class="dash-quick-actions">
           <button class="dqa-btn" onclick="showPage('cases')">🔍 Find a Case</button>
           <button class="dqa-btn" onclick="showPage('compare')">⚖ Compare Cases</button>
+        </div>
+      </div>
+      <div class="cases-hero" style="margin-top: 20px; text-align: center; background: transparent;">
+        <div class="search-bar-wrap">
+          <div class="search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1014 15.5l.27.28v.79l5 5 1.5-1.5-5-5zM10 15a5 5 0 110-10 5 5 0 010 10z"/></svg>
+            <input type="text" id="searchInputPub" placeholder="Search cases, acts, sections... or use 🎤" oninput="filterCases(this.value)" />
+            <button class="mic-btn" onclick="toggleVoiceSearch()" title="Search by voice">🎤</button>
+            <button class="search-btn" onclick="filterCases(document.getElementById('searchInputPub').value)">Search</button>
+          </div>
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setFilter('Supreme Court', this)">Supreme Court</button>
+          <button class="filter-btn" onclick="setFilter('High Court', this)">High Court</button>
+          <button class="filter-btn" onclick="setFilter('Criminal', this)">Criminal</button>
+          <button class="filter-btn" onclick="setFilter('Civil', this)">Civil</button>
         </div>
       </div>
       <div class="pub-hero-bar">
@@ -586,6 +590,7 @@
       </div>
     </div>
     <div id="dept-cases-count" class="dept-cases-count"></div>
+    <div id="dept-gallery-container" style="width: 100%; height: 500px; margin-bottom: 20px;"></div>
     <div id="dept-cases-grid" class="dept-cases-grid"></div>
   </div>
 </div>
@@ -607,5 +612,43 @@
 <script type="module" src="threads.js"></script>
 <script type="module" src="gallery.js"></script>
 <script src="app.js"></script>
+
+<!-- ======= CASE MODAL (AI CHAT) ======= -->
+<div id="case-modal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(10px);">
+  <div class="modal-content" style="background:#111; width:90%; max-width:800px; max-height:90vh; border-radius:12px; border:1px solid #333; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <div class="modal-header" style="padding:20px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h2 id="cm-title" style="margin:0; font-size:1.5rem; color:#fff;">Case Title</h2>
+        <div style="color:#aaa; font-size:0.9rem; margin-top:5px;"><span id="cm-court">Court</span> | <span id="cm-type">Type</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="cm-compare-btn" onclick="if(activeCaseForChat) { toggleCompare(activeCaseForChat.id, event); updateModalCompareBtn(); }" style="background:var(--accent); color:#000; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">⊕ Compare</button>
+        <button onclick="closeCaseModal()" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+    </div>
+    
+    <div class="modal-body" style="padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:20px;">
+      
+      <div class="cm-summary-box" style="background:#1a1a1a; padding:15px; border-radius:8px; border:1px solid #2a2a2a;">
+        <h3 style="margin:0 0 10px 0; font-size:1rem; color:#fff;">Case Summary</h3>
+        <p id="cm-summary" style="margin:0; color:#ccc; line-height:1.5; font-size:0.95rem;"></p>
+      </div>
+
+      <div class="cm-chat-container" style="display:flex; flex-direction:column; flex:1; background:#000; border-radius:8px; border:1px solid #333; overflow:hidden; min-height: 300px;">
+        <div id="cm-chat-history" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+          <!-- Chat messages go here -->
+        </div>
+        
+        <div class="cm-chat-input-row" style="display:flex; border-top:1px solid #333; padding:10px; background:#111;">
+          <input type="text" id="cm-chat-input" placeholder="Ask AI about this case..." style="flex:1; background:#222; border:1px solid #333; color:#fff; padding:10px 15px; border-radius:20px; outline:none;" />
+          <button onclick="sendCaseChat()" style="background:#fff; color:#000; border:none; border-radius:20px; padding:0 20px; margin-left:10px; font-weight:600; cursor:pointer;">Send</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -1,0 +1,62 @@
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
+const HARDCODED_CASES = [
+  { id: 'hc_001', title: 'Kesavananda Bharati v. State of Kerala', court: 'Supreme Court', year: 1973, type: 'Constitutional Law', summary: 'Established the Basic Structure Doctrine.', tags: ['basic structure', 'constitutional amendment', 'fundamental rights'], views: 98420, source: 'hardcoded' },
+  { id: 'hc_002', title: 'Maneka Gandhi v. Union of India', court: 'Supreme Court', year: 1978, type: 'Constitutional Law', summary: 'Expanded the scope of Article 21 (Right to Life and Liberty).', tags: ['article 21', 'right to life', 'personal liberty'], views: 87300, source: 'hardcoded' },
+  { id: 'hc_003', title: 'Vishaka v. State of Rajasthan', court: 'Supreme Court', year: 1997, type: 'Civil Law', summary: 'Laid down the Vishaka Guidelines for prevention of sexual harassment at the workplace.', tags: ['sexual harassment', 'workplace', 'women rights'], views: 79800, source: 'hardcoded' },
+  { id: 'hc_004', title: 'Navtej Singh Johar v. Union of India', court: 'Supreme Court', year: 2018, type: 'Constitutional Law', summary: 'Decriminalised consensual same-sex relations by reading down Section 377 of IPC.', tags: ['section 377', 'lgbtq', 'decriminalisation'], views: 95200, source: 'hardcoded' },
+  { id: 'hc_005', title: 'Justice K.S. Puttaswamy v. Union of India', court: 'Supreme Court', year: 2017, type: 'Constitutional Law', summary: 'Unanimously declared Privacy as a Fundamental Right under Article 21.', tags: ['right to privacy', 'aadhaar', 'data protection'], views: 91500, source: 'hardcoded' },
+  { id: 'hc_006', title: 'Shayara Bano v. Union of India (Triple Talaq)', court: 'Supreme Court', year: 2017, type: 'Civil Law', summary: 'Declared instant Triple Talaq unconstitutional.', tags: ['triple talaq', 'muslim women', 'personal law'], views: 88600, source: 'hardcoded' },
+  { id: 'hc_007', title: 'M. Siddiq v. Mahant Suresh Das (Ayodhya)', court: 'Supreme Court', year: 2019, type: 'Civil Law', summary: 'Settled the Ayodhya land dispute.', tags: ['ayodhya', 'land dispute', 'religious property'], views: 112000, source: 'hardcoded' },
+  { id: 'hc_008', title: 'Indra Sawhney v. Union of India', court: 'Supreme Court', year: 1992, type: 'Constitutional Law', summary: 'Upheld 27% OBC reservations but capped total reservations at 50%.', tags: ['reservations', 'obc', 'creamy layer'], views: 76400, source: 'hardcoded' },
+  { id: 'hc_009', title: 'S.R. Bommai v. Union of India', court: 'Supreme Court', year: 1994, type: 'Constitutional Law', summary: 'Curtailed the arbitrary use of Article 356 (President\'s Rule).', tags: ['presidents rule', 'article 356', 'federalism'], views: 68200, source: 'hardcoded' },
+  { id: 'hc_010', title: 'M.C. Mehta v. Union of India (Taj Trapezium)', court: 'Supreme Court', year: 1997, type: 'Civil Law', summary: 'Environmental case protecting the Taj Mahal from air pollution.', tags: ['environment', 'taj mahal', 'pollution'], views: 72100, source: 'hardcoded' },
+  { id: 'hc_011', title: 'Shreya Singhal v. Union of India', court: 'Supreme Court', year: 2015, type: 'Constitutional Law', summary: 'Struck down Section 66A of the IT Act.', tags: ['section 66a', 'internet freedom', 'free speech'], views: 84300, source: 'hardcoded' },
+  { id: 'hc_012', title: 'NALSA v. Union of India', court: 'Supreme Court', year: 2014, type: 'Constitutional Law', summary: 'Recognised transgender persons as a third gender.', tags: ['transgender', 'third gender', 'nalsa'], views: 77900, source: 'hardcoded' },
+  { id: 'hc_013', title: 'D.K. Basu v. State of West Bengal', court: 'Supreme Court', year: 1997, type: 'Criminal Law', summary: 'Laid down binding guidelines to prevent custodial deaths and torture.', tags: ['custodial death', 'police brutality', 'arrest'], views: 65800, source: 'hardcoded' },
+  { id: 'hc_014', title: 'Hussainara Khatoon v. State of Bihar', court: 'Supreme Court', year: 1979, type: 'Criminal Law', summary: 'Recognised the right to a speedy trial as a fundamental right.', tags: ['speedy trial', 'undertrial prisoners', 'bail'], views: 58700, source: 'hardcoded' },
+  { id: 'hc_015', title: 'Bachan Singh v. State of Punjab', court: 'Supreme Court', year: 1980, type: 'Criminal Law', summary: 'Upheld death penalty but restricted it to "rarest of rare" cases.', tags: ['death penalty', 'rarest of rare', 'sentencing'], views: 71200, source: 'hardcoded' },
+  { id: 'hc_016', title: 'Olga Tellis v. Bombay Municipal Corporation', court: 'Supreme Court', year: 1985, type: 'Civil Law', summary: 'Held that right to livelihood is part of right to life.', tags: ['right to livelihood', 'eviction', 'pavement dwellers'], views: 54300, source: 'hardcoded' },
+  { id: 'hc_017', title: 'Aruna Shanbaug v. Union of India', court: 'Supreme Court', year: 2011, type: 'Civil Law', summary: 'Addressed euthanasia and allowed passive euthanasia.', tags: ['euthanasia', 'right to die', 'passive euthanasia'], views: 62400, source: 'hardcoded' },
+  { id: 'hc_018', title: 'Common Cause v. Union of India (Living Will)', court: 'Supreme Court', year: 2018, type: 'Civil Law', summary: 'Upheld the validity of living wills (advance medical directives).', tags: ['right to die', 'living will', 'dignity'], views: 59800, source: 'hardcoded' },
+  { id: 'hc_019', title: 'Indian Young Lawyers Association v. State of Kerala', court: 'Supreme Court', year: 2018, type: 'Constitutional Law', summary: 'Allowed women of all ages to enter the Sabarimala temple.', tags: ['sabarimala', 'women entry', 'temple'], views: 89100, source: 'hardcoded' },
+  { id: 'hc_020', title: 'Lily Thomas v. Union of India', court: 'Supreme Court', year: 2013, type: 'Constitutional Law', summary: 'Convicted MPs and MLAs are disqualified immediately upon conviction.', tags: ['disqualification', 'elected representatives', 'rpa'], views: 63200, source: 'hardcoded' },
+  { id: 'hc_021', title: 'Centre for PIL v. Union of India (2G Spectrum)', court: 'Supreme Court', year: 2012, type: 'Civil Law', summary: 'Cancelled 122 telecom licences allocated during the 2G spectrum scam.', tags: ['2g scam', 'spectrum', 'corruption'], views: 81700, source: 'hardcoded' },
+  { id: 'hc_022', title: 'Subramanian Swamy v. Union of India', court: 'Supreme Court', year: 2016, type: 'Criminal Law', summary: 'Upheld the constitutional validity of criminal defamation.', tags: ['defamation', 'free speech', 'ipc 499'], views: 57400, source: 'hardcoded' },
+  { id: 'hc_023', title: 'M.C. Mehta v. Union of India (Ganga Pollution)', court: 'Supreme Court', year: 1988, type: 'Civil Law', summary: 'Ordered closure of tanneries polluting the Ganga river.', tags: ['ganga pollution', 'environment', 'absolute liability'], views: 48900, source: 'hardcoded' },
+  { id: 'hc_024', title: 'ADM Jabalpur v. Shivkant Shukla', court: 'Supreme Court', year: 1976, type: 'Constitutional Law', summary: 'Emergency-era judgment suspending habeas corpus (later overruled).', tags: ['emergency', 'habeas corpus', 'suspension'], views: 61300, source: 'hardcoded' },
+  { id: 'hc_025', title: 'Manohar Lal Sharma v. Principal Secretary', court: 'Supreme Court', year: 2014, type: 'Criminal Law', summary: 'Cancelled 214 coal block allocations (Coal Scam).', tags: ['coal scam', 'coal blocks', 'corruption'], views: 74500, source: 'hardcoded' },
+  { id: 'hc_026', title: 'Mohd. Ahmed Khan v. Shah Bano Begum', court: 'Supreme Court', year: 1985, type: 'Civil Law', summary: 'Muslim woman is entitled to maintenance from her husband.', tags: ['shah bano', 'maintenance', 'muslim personal law'], views: 69800, source: 'hardcoded' },
+  { id: 'hc_027', title: 'Arnesh Kumar v. State of Bihar', court: 'Supreme Court', year: 2014, type: 'Criminal Law', summary: 'Issued strict guidelines to prevent automatic arrests in 498A IPC cases.', tags: ['498a', 'dowry', 'arrest guidelines'], views: 66100, source: 'hardcoded' },
+  { id: 'hc_028', title: 'State of Madras v. Champakam Dorairajan', court: 'Supreme Court', year: 1951, type: 'Constitutional Law', summary: 'Led to the First Constitutional Amendment for reservations.', tags: ['reservations', 'backward classes', 'first amendment'], views: 44200, source: 'hardcoded' },
+  { id: 'hc_029', title: 'P.A. Inamdar v. State of Maharashtra', court: 'Supreme Court', year: 2005, type: 'Constitutional Law', summary: 'Government cannot impose reservation policy on private unaided colleges.', tags: ['private colleges', 'reservations', 'minority institutions'], views: 42800, source: 'hardcoded' },
+  { id: 'hc_030', title: 'Selvi v. State of Karnataka', court: 'Supreme Court', year: 2010, type: 'Criminal Law', summary: 'Narco analysis and brain mapping without consent violate self-incrimination rights.', tags: ['narco analysis', 'brain mapping', 'self-incrimination'], views: 55600, source: 'hardcoded' },
+  { id: 'hc_031', title: 'Romesh Thappar v. State of Madras', court: 'Supreme Court', year: 1950, type: 'Constitutional Law', summary: 'Freedom of speech includes freedom of propagation of ideas (press).', tags: ['freedom of speech', 'freedom of press', 'article 19'], views: 41200, source: 'hardcoded' },
+  { id: 'hc_032', title: 'I.R. Coelho v. State of Tamil Nadu', court: 'Supreme Court', year: 2007, type: 'Constitutional Law', summary: 'Laws placed in the Ninth Schedule are open to judicial review.', tags: ['ninth schedule', 'judicial review', 'basic structure'], views: 39500, source: 'hardcoded' },
+  { id: 'hc_033', title: 'Minerva Mills Ltd. v. Union of India', court: 'Supreme Court', year: 1980, type: 'Constitutional Law', summary: 'Struck down parts of 42nd Amendment; established balance between Fundamental Rights and DPSP.', tags: ['basic structure', 'dpsp', '42nd amendment'], views: 48900, source: 'hardcoded' },
+  { id: 'hc_034', title: 'Golaknath v. State of Punjab', court: 'Supreme Court', year: 1967, type: 'Constitutional Law', summary: 'Parliament cannot amend the Constitution to take away fundamental rights (later overruled).', tags: ['fundamental rights', 'constitutional amendment', 'article 368'], views: 52100, source: 'hardcoded' },
+  { id: 'hc_035', title: 'L. Chandra Kumar v. Union of India', court: 'Supreme Court', year: 1997, type: 'Constitutional Law', summary: 'Judicial review is a basic feature of the Constitution.', tags: ['judicial review', 'tribunals', 'basic structure'], views: 34200, source: 'hardcoded' },
+  { id: 'hc_036', title: 'Bandhua Mukti Morcha v. Union of India', court: 'Supreme Court', year: 1984, type: 'Civil Law', summary: 'Landmark judgment on eradication of bonded labour in India.', tags: ['bonded labour', 'human rights', 'article 21'], views: 40100, source: 'hardcoded' },
+  { id: 'hc_037', title: 'Vineet Narain v. Union of India', court: 'Supreme Court', year: 1997, type: 'Criminal Law', summary: 'Freed the CBI from political control; laid guidelines for CVC.', tags: ['cbi', 'corruption', 'hawala scandal', 'independence'], views: 38700, source: 'hardcoded' },
+  { id: 'hc_038', title: 'Pramati Educational & Cultural Trust v. Union of India', court: 'Supreme Court', year: 2014, type: 'Constitutional Law', summary: 'Upheld constitutional validity of the Right to Education Act, 2009.', tags: ['rte', 'right to education', 'minority schools'], views: 35600, source: 'hardcoded' },
+  { id: 'hc_039', title: 'Supreme Court Advocates-on-Record Association v. Union of India', court: 'Supreme Court', year: 2015, type: 'Constitutional Law', summary: 'Struck down NJAC Act, upholding the Collegium system for judicial appointments.', tags: ['njac', 'collegium', 'judicial independence'], views: 46800, source: 'hardcoded' },
+  { id: 'hc_040', title: 'M.C. Mehta v. Union of India (Oleum Gas Leak)', court: 'Supreme Court', year: 1986, type: 'Civil Law', summary: 'Established the principle of absolute liability for hazardous industries.', tags: ['oleum gas', 'absolute liability', 'environment'], views: 59300, source: 'hardcoded' }
+];
+
+async function seed() {
+  console.log('Seeding Supabase with 40 cases...');
+  for (const c of HARDCODED_CASES) {
+    const { error } = await supabase.from('cases').upsert([c]);
+    if (error) {
+      console.error('Error inserting', c.id, error);
+    } else {
+      console.log('Inserted', c.id);
+    }
+  }
+  console.log('Seeding complete.');
+}
+
+seed();

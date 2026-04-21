@@ -8,7 +8,7 @@ let CASES = [];
 let _casesLoaded = false;
 let _casesFetchInterval = null;
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname) ? 'http://localhost:3000' : '';
 
 async function loadCasesFromBackend(query = '', filter = 'all') {
   try {
@@ -542,27 +542,21 @@ function getAllAccounts() { try { return JSON.parse(localStorage.getItem('nyayaA
 function saveAllAccounts(accounts) { localStorage.setItem('nyayaAccounts', JSON.stringify(accounts)); }
 function getUser() { try { return JSON.parse(localStorage.getItem('nyayaUser') || 'null'); } catch(e) { return null; } }
 function saveUser(u) { localStorage.setItem('nyayaUser', JSON.stringify(u)); }
-function getSarvamKey() { return localStorage.getItem('sarvamApiKey') || ''; }
-function setSarvamKey(k) { localStorage.setItem('sarvamApiKey', k); }
+
+
 
 // ================================================
 // SARVAM TRANSLATION
 // ================================================
 const translationCache = {};
-async function sarvamTranslate(text, targetLang) {
-  if (!text || targetLang === 'en-IN' || targetLang === 'English') return text;
-  const key = getSarvamKey(); if (!key) return text;
-  const cacheKey = targetLang + '|' + text.slice(0, 60);
-  if (translationCache[cacheKey]) return translationCache[cacheKey];
-  try {
-    const resp = await fetch('https://api.sarvam.ai/translate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'api-subscription-key': key }, body: JSON.stringify({ input: text.slice(0, 1000), source_language_code: 'en-IN', target_language_code: targetLang, model: 'mayura:v1', mode: 'modern-colloquial' }) });
+, body: JSON.stringify({ input: text.slice(0, 1000), source_language_code: 'en-IN', target_language_code: targetLang, model: 'mayura:v1', mode: 'modern-colloquial' }) });
     if (!resp.ok) return text;
     const data = await resp.json(); const translated = data.translated_text || text;
     translationCache[cacheKey] = translated; return translated;
   } catch(e) { return text; }
 }
-function showTranslateToast(msg) { const t = document.getElementById('translate-toast'); const m = document.getElementById('translate-toast-msg'); if (t) { m.textContent = msg || 'Translating via Sarvam AI…'; t.style.display = 'flex'; } }
-function hideTranslateToast() { const t = document.getElementById('translate-toast'); if (t) t.style.display = 'none'; }
+ }
+
 
 // ================================================
 // PAGE NAVIGATION
@@ -654,28 +648,23 @@ function initSignupPage() {
   if (signupPage) signupPage.classList.remove('professional-signup');
   const robotLayer = document.getElementById('robot-bg-layer');
   if (robotLayer) robotLayer.classList.add('active');
-  updateSarvamNote();
+  
 }
 
-function updateSarvamNote() {
-  const note = document.getElementById('sarvam-status-note'); if (!note) return;
-  const key = getSarvamKey();
-  if (key) { note.innerHTML = `✅ Sarvam AI translation is active`; note.className = 'sarvam-note sarvam-note-ok'; }
+
   else { note.innerHTML = `ℹ️ No Sarvam API key — only English will work. <a href="#" onclick="showSarvamKeyPrompt()">Add key →</a>`; note.className = 'sarvam-note sarvam-note-warn'; }
 }
-function showSarvamKeyPrompt() { document.getElementById('sarvam-key-prompt').style.display = 'block'; document.getElementById('sarvam-key-prompt').scrollIntoView({ behavior: 'smooth' }); }
-async function saveSarvamKey() {
-  const key = document.getElementById('sarvam-api-key-input').value.trim(); const errorEl = document.getElementById('sarvam-key-error');
-  if (!key) { if (errorEl) { errorEl.textContent = 'Please enter your API key.'; errorEl.style.display = 'block'; } return; }
+); }
+ return; }
   showTranslateToast('Testing Sarvam AI key…');
   try {
     const resp = await fetch('https://api.sarvam.ai/translate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'api-subscription-key': key }, body: JSON.stringify({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'mayura:v1' }) });
     hideTranslateToast();
-    if (resp.ok) { setSarvamKey(key); document.getElementById('sarvam-key-prompt').style.display = 'none'; if (errorEl) errorEl.style.display = 'none'; updateSarvamNote(); }
+    if (resp.ok) { setSarvamKey(key); document.getElementById('sarvam-key-prompt').style.display = 'none'; if (errorEl) errorEl.style.display = 'none';  }
     else { const err = await resp.json().catch(() => ({})); if (errorEl) { errorEl.textContent = 'Invalid key: ' + (err.message || resp.status); errorEl.style.display = 'block'; } }
   } catch(e) { hideTranslateToast(); if (errorEl) { errorEl.textContent = 'Could not reach Sarvam AI.'; errorEl.style.display = 'block'; } }
 }
-function skipSarvam() { document.getElementById('sarvam-key-prompt').style.display = 'none'; updateSarvamNote(); }
+
 function suNext(step) {
   if (step === 1) {
     const name = document.getElementById('su-name').value.trim(); const email = document.getElementById('su-email').value.trim().toLowerCase(); const takenEl = document.getElementById('su-email-taken');
@@ -684,7 +673,7 @@ function suNext(step) {
     const existing = getAllAccounts().find(a => a.email === email);
     if (existing) { takenEl.style.display = 'block'; return; }
     takenEl.style.display = 'none'; suData.name = name; suData.email = email; goToStep(2);
-  } else if (step === 2) { if (!suData.role) { alert('Please select a role.'); return; } goToStep(3); updateSarvamNote(); }
+  } else if (step === 2) { if (!suData.role) { alert('Please select a role.'); return; } goToStep(3);  }
 }
 function suBack(step) { goToStep(step - 1); }
 function goToStep(n) {
@@ -719,7 +708,7 @@ async function suSubmit() {
   document.querySelectorAll('.signup-step').forEach(s => s.style.display = 'none');
   document.getElementById('step-success').style.display = 'block';
   const roleLabel = suData.role === 'professional' ? 'Law Professional' : 'General Public';
-  const key = getSarvamKey();
+  
   const transNote = key && suData.langCode !== 'en-IN' ? ` Case summaries will be translated to ${suData.language} via Sarvam AI.` : suData.langCode !== 'en-IN' ? ` Add a Sarvam API key to enable ${suData.language} translation.` : '';
   document.getElementById('su-welcome-msg').textContent = `You're registered as a ${roleLabel}.${transNote}`;
 }
@@ -729,27 +718,82 @@ function shakeField(id, placeholder) { const el = document.getElementById(id); i
 // ================================================
 // CASES
 // ================================================
-function filterCases() {
-  currentQuery = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-  currentCases = CASES.filter(c => {
-    const matchFilter = currentFilter === 'all' || c.court.includes(currentFilter) || c.type === currentFilter;
-    if (!currentQuery) return matchFilter;
-    return matchFilter && (c.title.toLowerCase().includes(currentQuery) || c.court.toLowerCase().includes(currentQuery) || c.type.toLowerCase().includes(currentQuery) || c.keywords.some(k => k.includes(currentQuery) || currentQuery.includes(k)) || c.summary.toLowerCase().includes(currentQuery) || String(c.year).includes(currentQuery));
-  });
-  if (currentQuery) { 
-    currentCases.sort((a, b) => (computeConfidence(b, currentQuery) || 0) - (computeConfidence(a, currentQuery) || 0)); 
-  } else {
-    // Sort by most viewed if no search query
-    currentCases.forEach(c => { if (c.views === undefined) c.views = Math.floor(Math.random() * 5000) + 500; });
-    currentCases.sort((a, b) => b.views - a.views);
+
+let searchDebounceTimer = null;
+
+async function doAISearch(query) {
+  if (!query) return query;
+  try {
+    const res = await fetch('/api/ai-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    if (data.success && data.optimized) {
+      console.log('AI Optimized Search:', data.optimized);
+      return data.optimized.toLowerCase();
+    }
+  } catch(e) {
+    console.warn("AI search error", e);
   }
-  // Limit to 4 max cases for the dashboard integration
-  currentCases = currentCases.slice(0, 4);
-  renderCases();
-  if (currentQuery.length > 2) {
-    const hist = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-    if (!hist.includes(currentQuery)) { hist.unshift(currentQuery); localStorage.setItem('searchHistory', JSON.stringify(hist.slice(0, 50))); }
-  }
+  return query;
+}
+
+async function filterCases() {
+  const rawQuery = (document.getElementById('searchInput')?.value || document.getElementById('searchInputPub')?.value || '').toLowerCase().trim();
+  
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  
+  searchDebounceTimer = setTimeout(async () => {
+    currentQuery = rawQuery;
+    let searchTerms = currentQuery;
+    
+    // If it's a long natural language query, ask AI to extract keywords
+    if (currentQuery.length > 15) {
+      document.getElementById('case-count').innerHTML = `<i>AI optimizing search...</i>`;
+      searchTerms = await doAISearch(currentQuery);
+    }
+    
+    // split terms if it's comma separated
+    const keywords = searchTerms.split(',').map(s => s.trim()).filter(Boolean);
+    
+    currentCases = CASES.filter(c => {
+      const matchFilter = currentFilter === 'all' || c.court.includes(currentFilter) || c.type === currentFilter;
+      if (!currentQuery) return matchFilter;
+      
+      let matchQuery = false;
+      for (const kw of keywords) {
+          if (c.title.toLowerCase().includes(kw) || 
+              c.court.toLowerCase().includes(kw) || 
+              c.type.toLowerCase().includes(kw) || 
+              c.keywords.some(k => k.includes(kw) || kw.includes(k)) || 
+              c.summary.toLowerCase().includes(kw) || 
+              String(c.year).includes(kw)) {
+              matchQuery = true;
+              break;
+          }
+      }
+      return matchFilter && matchQuery;
+    });
+
+    if (currentQuery) { 
+      currentCases.sort((a, b) => (computeConfidence(b, currentQuery) || 0) - (computeConfidence(a, currentQuery) || 0)); 
+    } else {
+      currentCases.forEach(c => { if (c.views === undefined) c.views = Math.floor(Math.random() * 5000) + 500; });
+      currentCases.sort((a, b) => b.views - a.views);
+    }
+    
+    // Limit to 4 max cases for the dashboard integration in Pro view, but public view could use more.
+    // Let's limit to 10.
+    currentCases = currentCases.slice(0, 10);
+    renderCases();
+    
+    if (currentQuery.length > 2) {
+      const hist = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      if (!hist.includes(currentQuery)) { hist.unshift(currentQuery); localStorage.setItem('searchHistory', JSON.stringify(hist.slice(0, 50))); }
+    }
+  }, 500);
 }
 function setFilter(filter, btn) { currentFilter = filter; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); filterCases(); }
 
@@ -904,7 +948,7 @@ function initDashboard() {
 function initProDash(user) {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount(); const first = user.name.split(' ')[0];
   document.getElementById('dash-pro-greeting').textContent = `Welcome back, ${first}`;
-  const key = getSarvamKey(); const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
+   const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
   document.getElementById('dash-pro-lang').textContent = `Language: ${langNote} · Professional Access`;
   animateCount('pro-stat-bookmarks', bm); animateCount('pro-stat-history', hist); animateCount('pro-stat-useful', useful);
   const pb = document.getElementById('pro-bm-bar'); if (pb) pb.style.width = Math.min(bm * 5, 100) + '%';
@@ -918,7 +962,7 @@ function initProDash(user) {
 function initPubDash(user) {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount(); const first = user.name.split(' ')[0];
   document.getElementById('dash-pub-greeting').textContent = `Welcome, ${first}`;
-  const key = getSarvamKey(); const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
+   const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
   document.getElementById('dash-pub-lang').textContent = `Language: ${langNote} · Citizen Access`;
   animateCount('pub-stat-bookmarks', bm); animateCount('pub-stat-history', hist); animateCount('pub-stat-useful', useful);
   const pb = document.getElementById('pub-bm-bar'); if (pb) pb.style.width = Math.min(bm * 5, 100) + '%';
@@ -976,9 +1020,7 @@ function setProfLang(el, lang, code) {
   const accounts = getAllAccounts(); const idx = accounts.findIndex(a => a.email === user.email); if (idx >= 0) { accounts[idx].language = lang; accounts[idx].langCode = code; saveAllAccounts(accounts); }
   document.querySelectorAll('#prof-lang-grid .lang-opt').forEach(o => o.classList.remove('selected')); el.classList.add('selected');
 }
-async function updateSarvamKeyFromProfile() {
-  const keyInput = document.getElementById('prof-sarvam-key'); const msgEl = document.getElementById('prof-sarvam-msg'); const key = keyInput?.value.trim();
-  if (!key) { if (msgEl) { msgEl.textContent = 'Please enter a valid API key.'; msgEl.style.color = '#f87171'; msgEl.style.display = 'block'; } return; }
+ return; }
   showTranslateToast('Verifying Sarvam AI key…');
   try {
     const resp = await fetch('https://api.sarvam.ai/translate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'api-subscription-key': key }, body: JSON.stringify({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'mayura:v1' }) });
@@ -1248,6 +1290,7 @@ function renderDeptCounts() {
 // ── Sort state ──
 let deptCurrentId = null;
 let deptSortMode = 'relevance';
+let deptGalleryInstance = null;
 let deptScoredCases = [];
 
 /**
@@ -1316,6 +1359,7 @@ function deptSetSort(mode, btn) {
 function renderDeptCards() {
   const grid = document.getElementById('dept-cases-grid');
   const countEl = document.getElementById('dept-cases-count');
+  const galleryContainer = document.getElementById('dept-gallery-container');
   if (!grid) return;
 
   const dept = DEPARTMENTS.find(d => d.id === deptCurrentId);
@@ -1327,7 +1371,6 @@ function renderDeptCards() {
   } else if (deptSortMode === 'year_asc') {
     scored.sort((a, b) => a.case.year - b.case.year);
   }
-  // 'relevance' keeps default order (already sorted by score)
 
   if (countEl) {
     const total = scored.length;
@@ -1339,48 +1382,28 @@ function renderDeptCards() {
       <div class="dept-empty-state">
         <span class="des-icon">⚖️</span>
         <h3>No Cases Found</h3>
-        <p>No cases are currently mapped to this practice area. Check back after more cases are indexed.</p>
-        <button class="btn-primary" onclick="closeDeptPage();showPage('cases')">Search All Cases →</button>
+        <p>No cases are currently mapped to this practice area.</p>
+        <button class="btn-primary" onclick="closeDeptPage();showPage('cases')">Search All Cases</button>
       </div>`;
+    galleryContainer.style.display = 'none';
+    if (deptGalleryInstance) { deptGalleryInstance.destroy(); deptGalleryInstance = null; }
     return;
   }
 
-  grid.innerHTML = scored.map(({ case: c, score }) => {
-    const feedback = getFeedbackForCase(c.id);
-    const inCompare = compareList.includes(c.id);
-    const compareIdx = compareList.indexOf(c.id);
-    const col = inCompare ? COMPARE_COLORS[compareIdx] : null;
-    const isExtra = dept && dept.extraCaseIds.includes(c.id);
-    const relevanceTag = isExtra
-      ? `<div class="dept-relevance-tag">⭐ Featured</div>`
-      : score >= 80
-        ? `<div class="dept-relevance-tag" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.3);color:#4ade80">● High Relevance</div>`
-        : `<div class="dept-relevance-tag" style="background:rgba(91,141,238,0.1);border-color:rgba(91,141,238,0.3);color:#5b8dee">● Related</div>`;
+  galleryContainer.style.display = 'block';
+  grid.style.display = 'none'; // Hide grid since we show gallery
 
-    return `
-      <div class="case-card${inCompare ? ' in-compare-card' : ''}" onclick="openCase(${c.id})"${inCompare ? ` style="border-color:${col.border}"` : ''}>
-        ${inCompare ? `<div class="card-compare-ribbon" style="background:${col.text}">${col.label}</div>` : ''}
-        ${relevanceTag}
-        <div class="cc-court">${c.court} • ${c.year}</div>
-        <h3>${c.title}</h3>
-        <div class="cc-meta">${c.type} Law</div>
-        <span class="cc-tag">${c.type}</span>
-        <div class="cc-actions" onclick="event.stopPropagation()">
-          <button class="cc-btn cc-btn-view" onclick="openCase(${c.id})">View</button>
-          <button class="cc-btn cc-btn-compare${inCompare ? ' in-compare' : ''}" data-id="${c.id}"
-            onclick="toggleCompare(${c.id}, event)"
-            style="${inCompare ? `background:${col.bg};border-color:${col.border};color:${col.text}` : ''}">
-            ${inCompare ? `⊖ ${col.label}` : '⊕ Compare'}
-          </button>
-          <button class="cc-btn cc-btn-bm" id="bm-dept-btn-${c.id}" onclick="toggleBookmark(${c.id}, event);updateDeptBmBtn(${c.id})">${isBookmarked(c.id) ? '🔖 Saved' : '+ Save'}</button>
-        </div>
-        <div class="feedback-row" onclick="event.stopPropagation()" id="fb-dept-row-${c.id}">
-          <span class="feedback-label">Helpful?</span>
-          <button class="fb-btn fb-useful ${feedback === 'useful' ? 'active' : ''}" onclick="submitFeedback(${c.id},'useful')" title="Mark as useful">👍</button>
-          <button class="fb-btn fb-irrelevant ${feedback === 'not_relevant' ? 'active' : ''}" onclick="submitFeedback(${c.id},'not_relevant')" title="Not relevant">👎</button>
-        </div>
-      </div>`;
-  }).join('');
+  // Init Gallery
+  const casesToRender = scored.map(s => s.case);
+  if (deptGalleryInstance) {
+    deptGalleryInstance.destroy();
+  }
+  if (window.initCircularGallery) {
+    deptGalleryInstance = window.initCircularGallery(galleryContainer, casesToRender, (activeCase) => {
+      // Optional: onActiveChange
+    });
+  }
+
 }
 
 function updateDeptBmBtn(id) {
@@ -2193,4 +2216,152 @@ function showPdfToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ============================================================
+//  CASE MODAL & AI CHAT (ChatGPT & ElevenLabs)
+// ============================================================
+let activeCaseForChat = null;
+
+function openCase(id) {
+  const c = CASES.find(x => String(x.id) === String(id));
+  if (!c) return;
+  
+  // Track history
+  const user = getUser();
+  if (user) {
+    if (!user.history) user.history = [];
+    user.history = user.history.filter(h => String(h.id) !== String(id));
+    user.history.unshift(c);
+    if (user.history.length > 50) user.history.pop();
+    saveUser(user);
+    updateNavForUser(user);
+  }
+
+  activeCaseForChat = c;
+  
+  const modal = document.getElementById('case-modal');
+  if (!modal) return;
+  
+  document.getElementById('cm-title').textContent = c.title;
+  document.getElementById('cm-court').textContent = c.court + ' • ' + (c.year || 'N/A');
+  document.getElementById('cm-type').textContent = c.type;
+  document.getElementById('cm-summary').textContent = c.summary;
+  
+  document.getElementById('cm-chat-history').innerHTML = '<div class="chat-msg ai-msg">Hello! I am NyayaMind. How can I help you understand this case?</div>';
+  
+  updateModalCompareBtn();
+  modal.style.display = 'flex';
+}
+
+function closeCaseModal() {
+  document.getElementById('case-modal').style.display = 'none';
+  activeCaseForChat = null;
+}
+
+async function sendCaseChat() {
+  const input = document.getElementById('cm-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  input.value = '';
+  const hist = document.getElementById('cm-chat-history');
+  hist.innerHTML += `<div class="chat-msg user-msg">${msg}</div>`;
+  hist.scrollTop = hist.scrollHeight;
+  
+  hist.innerHTML += `<div class="chat-msg ai-msg loading-msg" id="cm-loading">Thinking...</div>`;
+  hist.scrollTop = hist.scrollHeight;
+  
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, caseContext: activeCaseForChat })
+    });
+    const data = await res.json();
+    document.getElementById('cm-loading').remove();
+    
+    if (data.success) {
+      const msgId = 'msg-' + Date.now();
+      hist.innerHTML += `
+        <div class="chat-msg ai-msg" id="${msgId}">
+          ${data.reply}
+          <button class="tts-btn" onclick="playTTS('${msgId}')" title="Read Aloud">🔊</button>
+        </div>`;
+    } else {
+      hist.innerHTML += `<div class="chat-msg ai-msg" style="color:red">Error: Could not get reply.</div>`;
+    }
+  } catch (err) {
+    document.getElementById('cm-loading')?.remove();
+    hist.innerHTML += `<div class="chat-msg ai-msg" style="color:red">Connection error.</div>`;
+  }
+  hist.scrollTop = hist.scrollHeight;
+}
+
+async function playTTS(msgId) {
+  const el = document.getElementById(msgId);
+  if (!el) return;
+  
+  // Extract text without the button
+  const clone = el.cloneNode(true);
+  const btn = clone.querySelector('button');
+  if (btn) btn.remove();
+  const text = clone.textContent.trim();
+  
+  const originalBtnText = document.querySelector(`#${msgId} .tts-btn`).textContent;
+  document.querySelector(`#${msgId} .tts-btn`).textContent = '⏳';
+  
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    
+    if (!res.ok) throw new Error('TTS failed');
+    
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+    
+    audio.onended = () => {
+        document.querySelector(`#${msgId} .tts-btn`).textContent = '🔊';
+    };
+  } catch (err) {
+    alert("TTS Error: " + err.message);
+    document.querySelector(`#${msgId} .tts-btn`).textContent = '🔊';
+  }
+}
+
+// Ensure Enter key sends chat
+document.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && document.activeElement.id === 'cm-chat-input') {
+        sendCaseChat();
+    }
+});
+
+
+
+function updateModalCompareBtn() {
+  const btn = document.getElementById('cm-compare-btn');
+  if (!btn || !activeCaseForChat) return;
+  
+  const inList = compareList.includes(activeCaseForChat.id);
+  const idx = compareList.indexOf(activeCaseForChat.id);
+  
+  if (inList) {
+    const col = COMPARE_COLORS[idx];
+    btn.textContent = `⊖ ${col.label}`;
+    btn.style.background = col.bg;
+    btn.style.color = col.text;
+    btn.style.borderColor = col.border;
+    btn.style.borderStyle = 'solid';
+    btn.style.borderWidth = '1px';
+  } else {
+    btn.textContent = `⊕ Compare`;
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#000';
+    btn.style.border = 'none';
+  }
 }
