@@ -15,8 +15,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnon
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const openaiApiKey = process.env.OPENAI_API_KEY || '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';
-const openai = new OpenAI({ apiKey: openaiApiKey });
+const openaiApiKey = process.env.OPENAI_API_KEY; // MUST be set in Netlify Environment Variables
+const openai = new OpenAI({ apiKey: openaiApiKey || 'dummy-key-to-prevent-crash' });
 
 // ── CORS headers ─────────────────────────────────────────────
 const CORS = {
