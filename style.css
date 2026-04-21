@@ -63,10 +63,7 @@ button { cursor: pointer; font-family: inherit; }
 .btn-signup:hover { background: #d4b060; box-shadow: 0 0 16px var(--accent-glow); }
 .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
 .hamburger span { width: 22px; height: 2px; background: var(--text-primary); display: block; transition: 0.3s; }
-.mobile-menu { display: none; position: fixed; inset: 0; background: rgba(6,8,15,0.98); flex-direction: column; justify-content: center; align-items: center; gap: 36px; z-index: 999; }
-.mobile-menu.open { display: flex; }
-.mobile-menu a { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--text-primary); letter-spacing: 0.1em; }
-.mobile-menu a:hover { color: var(--accent); }
+/* .mobile-menu styles are in mobile.css */
 
 /* ---- PAGES ---- */
 .page { display: none; min-height: 100vh; }
@@ -2378,4 +2375,51 @@ button { cursor: pointer; font-family: inherit; }
   position: relative; 
   padding: 60px 0; 
   /* Removed shadow and z-index to prevent 'overlay' feel */
+}
+/* ================================================
+   MOBILE RESPONSIVENESS (NyayaMind Optimized)
+   ================================================ */
+@media (max-width: 768px) {
+    /* Navbar */
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    #navbar { width: 96%; padding: 10px 20px; }
+    
+    /* Hero */
+    .hero-heading { font-size: 40px !important; }
+    .hero-stats { gap: 20px; flex-direction: column; }
+    .stat span { font-size: 28px; }
+    .stat-divider { display: none; }
+    
+    /* Pages */
+    .page-inner { padding: calc(var(--nav-h) + 20px) 15px 40px; }
+    
+    /* About Card */
+    .about-card { flex-direction: column; padding: 30px 20px; gap: 40px; }
+    
+    /* Dashboard */
+    .dashboard-grid { grid-template-columns: 1fr !important; gap: 20px; }
+    .dash-hero { height: 350px !important; }
+    .dash-hero h1 { font-size: 32px; }
+    
+    /* Compare */
+    .compare-grid { grid-template-columns: 1fr !important; }
+    .compare-tray { height: auto !important; flex-direction: column; padding: 15px; }
+    .ct-cases { flex-wrap: wrap; justify-content: center; }
+    
+    /* Case Modal */
+    #case-modal .modal-content { width: 96% !important; height: 92% !important; top: 4% !important; left: 2% !important; transform: none !important; margin: 0 !important; }
+    .modal-header { padding: 15px; }
+    .modal-body { padding: 15px; }
+    .chat-msg { max-width: 90%; }
+    
+    /* 3D Gallery Mobile Adjustment */
+    #gallery-container, #dept-gallery-container { height: 400px !important; }
+}
+
+@media (max-width: 480px) {
+    .hero-heading { font-size: 32px !important; }
+    .btn-hero { width: 100%; }
+    .nav-actions { gap: 5px; }
+    .btn-try, .btn-signup { padding: 6px 12px; font-size: 10px; }
 }

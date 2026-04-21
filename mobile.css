@@ -1,0 +1,240 @@
+/* ================================================
+   MOBILE RESPONSIVENESS — COMPREHENSIVE (NyayaMind)
+   ================================================ */
+
+/* ---- General Touch Improvements ---- */
+* { -webkit-tap-highlight-color: transparent; }
+button, a, [onclick] { touch-action: manipulation; }
+
+/* ======================================
+   TABLET: max-width 1024px
+   ====================================== */
+@media (max-width: 1024px) {
+  .nav-links { gap: 16px; }
+  .nav-links a { font-size: 11px; }
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-card { gap: 40px; }
+  .compare-grid { grid-template-columns: 1fr; }
+}
+
+/* ======================================
+   MOBILE: max-width 768px
+   ====================================== */
+@media (max-width: 768px) {
+  :root { --nav-h: 70px; }
+
+  /* --- Navbar --- */
+  .nav-links { display: none !important; }
+  .hamburger { display: flex !important; }
+  #navbar { width: 94%; padding: 10px 16px; }
+  .nav-logo { font-size: 18px; }
+  .nav-actions .btn-try { display: none; }
+  .btn-signup { padding: 7px 14px; font-size: 11px; }
+
+  /* --- Hero --- */
+  .hero-content { padding: calc(var(--nav-h) + 10px) 16px 30px; }
+  .hero-heading { font-size: clamp(32px, 9vw, 52px) !important; }
+  .hero-tag { margin-bottom: 18px; }
+  .hero-buttons { flex-direction: column; align-items: center; gap: 10px; }
+  .btn-hero { width: 100%; max-width: 320px; }
+  .hero-stats { margin-top: 40px; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px 28px; }
+  .stat span { font-size: 28px; }
+  .stat-divider { display: none; }
+
+  /* --- Pages --- */
+  .page-inner { padding: calc(var(--nav-h) + 24px) 14px 60px; }
+
+  /* --- About --- */
+  .about-card { flex-direction: column; padding: 24px 16px; gap: 32px; }
+  .about-left, .about-right { width: 100% !important; }
+
+  /* --- Dashboard --- */
+  .dash-hero { min-height: 300px !important; padding: 80px 20px 40px !important; }
+  .dash-hero h1 { font-size: 28px !important; }
+  .dash-hero p { font-size: 14px !important; }
+  .dash-pub-search { flex-direction: column; gap: 8px !important; }
+  .dash-pub-search input { width: 100% !important; }
+  .dash-pub-search button { width: 100% !important; }
+  .dashboard-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+  .dept-card { padding: 20px 14px !important; }
+  .dept-card .dc-icon { font-size: 28px !important; }
+  .dept-card h3 { font-size: 14px !important; }
+  .dash-content-wrapper { padding: 30px 14px !important; }
+
+  /* --- Pro/Pub Dashboard Sections --- */
+  .pro-stats-row, .pub-stats-row { grid-template-columns: 1fr 1fr !important; gap: 12px; }
+  .dash-section { padding: 20px 14px !important; }
+
+  /* --- Department Overlay --- */
+  .dept-page-inner { padding: 0 !important; }
+  .dept-page-header { padding: 16px 14px !important; flex-wrap: wrap; gap: 10px; }
+  .dept-page-title { font-size: 22px !important; }
+  .dept-filter-bar { flex-wrap: wrap; gap: 6px !important; padding: 10px 14px !important; }
+  .dept-filter-all { padding: 6px 12px !important; font-size: 11px !important; }
+  #dept-gallery-container { height: 420px !important; }
+
+  /* --- 3D Gallery --- */
+  #gallery-container { height: 400px !important; }
+  .active-case-board { padding: 14px !important; }
+  .acb-title { font-size: 16px !important; }
+  .acb-summary { font-size: 13px !important; }
+  .acb-actions { flex-wrap: wrap; gap: 8px !important; }
+  .cc-btn-compare, .cc-btn-pdf, .fb-btn { padding: 7px 12px !important; font-size: 12px !important; }
+
+  /* --- Case Modal --- */
+  #case-modal { align-items: flex-end !important; }
+  #case-modal .modal-content {
+    width: 100% !important;
+    height: 92dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    position: fixed !important;
+    margin: 0 !important;
+  }
+  .modal-header { padding: 14px 16px !important; }
+  .modal-header h2 { font-size: 16px !important; }
+  .modal-body { padding: 14px 16px !important; gap: 14px !important; }
+  #cm-compare-btn { padding: 6px 12px !important; font-size: 12px !important; }
+  #cm-chat-input { font-size: 14px !important; }
+  .chat-msg { max-width: 88% !important; font-size: 13px !important; }
+
+  /* --- Compare Page --- */
+  .compare-tray { height: auto !important; flex-direction: row; flex-wrap: wrap; padding: 12px 14px !important; gap: 8px; }
+  .compare-grid { grid-template-columns: 1fr !important; }
+  .compare-run-wrap { flex-direction: column; align-items: stretch; gap: 10px; }
+
+  /* --- Bookmarks / History --- */
+  .bm-grid { grid-template-columns: 1fr !important; }
+  .hist-item { padding: 14px !important; }
+
+  /* --- Profile --- */
+  .profile-hero-card { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+  .profile-stats-row { grid-template-columns: 1fr 1fr 1fr !important; }
+  .prof-lang-grid { grid-template-columns: 1fr 1fr !important; }
+  .prof-theme-options { flex-direction: column; gap: 10px; }
+
+  /* --- Compare Tray --- */
+  .compare-tray { border-radius: 0 !important; }
+
+  /* --- Doc Parser --- */
+  .docparser-drop-zone { padding: 30px 16px !important; }
+  .dp-result-cols { flex-direction: column !important; }
+}
+
+/* ======================================
+   SMALL PHONES: max-width 480px
+   ====================================== */
+@media (max-width: 480px) {
+  .hero-heading { font-size: 30px !important; }
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  .hero-stats { flex-direction: column; align-items: center; gap: 12px; }
+  .btn-signup { display: none; }
+  .hamburger { display: flex !important; }
+  .nav-user-name { display: none; }
+  #gallery-container { height: 350px !important; }
+  #dept-gallery-container { height: 350px !important; }
+  .dept-page-title-wrap { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .pro-stats-row, .pub-stats-row { grid-template-columns: 1fr !important; }
+}
+
+/* ---- Safe area for iPhones with notch ---- */
+@supports (padding: max(0px)) {
+  #navbar { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .mobile-menu { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  #case-modal .modal-content { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+}
+
+/* ---- Premium Mobile Menu ---- */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,8,15,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 9999;
+  display: none;
+  padding: 40px 20px;
+}
+.mobile-menu.open { display: flex; animation: fadeInMenu 0.25s ease; }
+@keyframes fadeInMenu { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+.mobile-menu-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+.mobile-menu-close:hover { border-color: var(--accent); color: var(--accent); }
+
+.mobile-menu-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+
+.mobile-menu a {
+  font-size: 18px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  padding: 8px 20px;
+  border-radius: 10px;
+  transition: 0.2s;
+  width: 100%;
+  max-width: 280px;
+  text-align: left;
+}
+.mobile-menu a:hover { color: var(--text-primary); background: var(--bg-card); }
+
+.mobile-menu-divider {
+  width: 200px;
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+
+#mobile-auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.mobile-signup-btn {
+  background: var(--accent) !important;
+  color: #06080f !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  border-radius: 10px !important;
+  padding: 12px 20px !important;
+}
+
+.mobile-menu-stats {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+.mobile-menu-stats span { color: var(--accent); font-weight: 600; }

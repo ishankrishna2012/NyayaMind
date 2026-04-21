@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#06080f"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
   <title>NyayaMind — AI Legal Intelligence</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="mobile.css" />
 </head>
 <body>
 <!-- Robot background layer — shown only on General Public signup page -->
@@ -59,16 +62,24 @@
 </div>
 
 <div class="mobile-menu" id="mobile-menu">
-  <a href="#" onclick="showPage('home'); closeMobile()">Home</a>
-  <a href="#" onclick="showPage('about'); closeMobile()">About</a>
-
-  <a href="#" onclick="showPage('compare'); closeMobile()">Compare Cases</a>
-  <a href="#" onclick="showPage('docparser'); closeMobile()">Doc Parser</a>
-  <a href="#" onclick="showPage('dashboard'); closeMobile()">Dashboard</a>
-  <a href="#" onclick="showPage('bookmarks'); closeMobile()">Bookmarks</a>
-  <a href="#" onclick="showPage('history'); closeMobile()">History</a>
-  <a href="#" onclick="showPage('profile'); closeMobile()">Profile</a>
-  <a href="#" onclick="showPage('login'); closeMobile()" style="color:var(--accent)">Log In</a>
+  <button class="mobile-menu-close" onclick="closeMobile()" aria-label="Close menu">✕</button>
+  <div class="mobile-menu-logo">NyayaMind</div>
+  <a href="#" onclick="showPage('home'); closeMobile()">🏠 Home</a>
+  <a href="#" onclick="showPage('about'); closeMobile()">📖 About</a>
+  <a href="#" onclick="showPage('dashboard'); closeMobile()">⚖️ Dashboard</a>
+  <a href="#" onclick="showPage('compare'); closeMobile()">🔍 Compare Cases</a>
+  <a href="#" onclick="showPage('docparser'); closeMobile()">📄 Doc Parser</a>
+  <a href="#" onclick="showPage('bookmarks'); closeMobile()">🔖 Bookmarks</a>
+  <a href="#" onclick="showPage('history'); closeMobile()">🕐 History</a>
+  <a href="#" onclick="showPage('profile'); closeMobile()">👤 Profile</a>
+  <div class="mobile-menu-divider"></div>
+  <div id="mobile-auth-actions">
+    <a href="#" onclick="showPage('login'); closeMobile()" style="color:var(--accent)">🔑 Log In</a>
+    <a href="#" onclick="showPage('signup'); closeMobile()" class="mobile-signup-btn">Sign Up Free</a>
+  </div>
+  <div class="mobile-menu-stats">
+    <span id="mobile-stat-cases">...</span> cases indexed
+  </div>
 </div>
 
 <!-- ======= HOME ======= -->
@@ -83,7 +94,7 @@
       <button class="btn-hero btn-hero-outline" onclick="showPage('dashboard')">Search Cases →</button>
     </div>
     <div class="hero-stats">
-      <div class="stat"><span>10K+</span><p>Legal Cases</p></div>
+      <div class="stat"><span id="hero-stat-cases">...</span><p>Legal Cases</p></div>
       <div class="stat-divider"></div>
       <div class="stat"><span>98%</span><p>Accuracy Rate</p></div>
       <div class="stat-divider"></div>
@@ -572,7 +583,7 @@
       <div id="prof-notifications" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Notifications</h2><div class="profile-form-card"><div class="prof-toggle-row"><div class="ptr-info"><strong>Case Updates</strong><p>Get notified when new landmark cases are added</p></div><label class="prof-toggle"><input type="checkbox" id="notif-cases" checked onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>AI Query Alerts</strong><p>Receive alerts when AI processes important queries</p></div><label class="prof-toggle"><input type="checkbox" id="notif-ai" onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Weekly Digest</strong><p>A weekly summary of top legal developments</p></div><label class="prof-toggle"><input type="checkbox" id="notif-digest" checked onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Bookmark Reminders</strong><p>Remind me to review saved cases periodically</p></div><label class="prof-toggle"><input type="checkbox" id="notif-bookmark" onchange="saveNotifPref()"><span class="prof-toggle-slider"></span></label></div></div></div>
       <div id="prof-privacy" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Privacy & Data</h2><div class="profile-form-card"><div class="prof-toggle-row"><div class="ptr-info"><strong>Save Search History</strong><p>Store your search queries for quick access later</p></div><label class="prof-toggle"><input type="checkbox" id="priv-search-hist" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Save Case History</strong><p>Keep a log of cases you've viewed</p></div><label class="prof-toggle"><input type="checkbox" id="priv-case-hist" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Analytics & Improvement</strong><p>Help improve NyayaMind with anonymised usage data</p></div><label class="prof-toggle"><input type="checkbox" id="priv-analytics" checked onchange="savePrivacyPref()"><span class="prof-toggle-slider"></span></label></div><div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)"><h4 style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:14px;letter-spacing:.08em">Danger Zone</h4><div style="display:flex;flex-direction:column;gap:10px"><button class="danger-btn" onclick="clearAllHist()">🗑️ Clear All History</button><button class="danger-btn" onclick="clearBookmarks()">🗑️ Clear All Bookmarks</button></div></div></div></div>
       <div id="prof-appearance" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>Appearance</h2><div class="profile-form-card"><div class="su-field"><label>Theme</label><div class="prof-theme-options"><div class="prof-theme-opt selected" id="theme-dark" onclick="setTheme('dark',this)"><div class="pto-preview dark-preview"></div><span>Dark (Default)</span></div><div class="prof-theme-opt" id="theme-dim" onclick="setTheme('dim',this)"><div class="pto-preview dim-preview"></div><span>Dim</span></div></div></div><div class="prof-toggle-row" style="margin-top:16px"><div class="ptr-info"><strong>Reduce Animations</strong><p>Minimise motion for better accessibility</p></div><label class="prof-toggle"><input type="checkbox" id="pref-reduce-motion" onchange="applyReduceMotion()"><span class="prof-toggle-slider"></span></label></div><div class="prof-toggle-row"><div class="ptr-info"><strong>Compact Mode</strong><p>Show more content with reduced spacing</p></div><label class="prof-toggle"><input type="checkbox" id="pref-compact" onchange="applyCompactMode()"><span class="prof-toggle-slider"></span></label></div></div></div>
-      <div id="prof-about" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>About NyayaMind</h2><div class="profile-form-card"><div class="about-info-row"><span class="air-label">Version</span><span class="air-value">1.2.0</span></div><div class="about-info-row"><span class="air-label">Cases Indexed</span><span class="air-value">10,248+</span></div><div class="about-info-row"><span class="air-label">Courts Covered</span><span class="air-value">50+</span></div><div class="about-info-row"><span class="air-label">AI Model</span><span class="air-value">NyayaMind AI (GPT-4o)</span></div><div class="about-info-row"><span class="air-label">Last Updated</span><span class="air-value">April 2026</span></div><div style="margin-top:24px;padding:18px 20px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(201,168,76,0.2)"><p style="font-size:13px;color:var(--text-muted);line-height:1.7">NyayaMind is built to democratise access to Indian legal knowledge using AI.</p></div></div></div>
+      <div id="prof-about" class="sub-section"><div class="back-btn" onclick="profBack('prof-menu')">← Back</div><h2>About NyayaMind</h2><div class="profile-form-card"><div class="about-info-row"><span class="air-label">Version</span><span class="air-value">1.2.5</span></div><div class="about-info-row"><span class="air-label">Cases Indexed</span><span id="stat-cases-indexed" class="air-value">...</span></div><div class="about-info-row"><span class="air-label">Courts Covered</span><span id="stat-courts-covered" class="air-value">50+</span></div><div class="about-info-row"><span class="air-label">AI Model</span><span class="air-value">NyayaMind AI (GPT-4o)</span></div><div class="about-info-row"><span class="air-label">Last Updated</span><span id="stat-last-updated" class="air-value">April 2026</span></div><div style="margin-top:24px;padding:18px 20px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(201,168,76,0.2)"><p style="font-size:13px;color:var(--text-muted);line-height:1.7">NyayaMind is built to democratise access to Indian legal knowledge using AI.</p></div></div></div>
     </div>
   </div>
 </section>

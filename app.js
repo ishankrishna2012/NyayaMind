@@ -53,7 +53,7 @@ function startLiveCasePolling() {
   if (_casesFetchInterval) return;
   _casesFetchInterval = setInterval(async () => {
     const ok = await loadCasesFromBackend(currentQuery, currentFilter);
-    if (ok) filterCases(); // re-render with fresh data
+    if (ok) { filterCases(); fetchLiveStats(); } // re-render with fresh data
   }, 15000);
 }
 
@@ -1038,6 +1038,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // ── Load cases from backend (30 hardcoded + live Kanoon API) ──
   const loaded = await loadCasesFromBackend();
+  fetchLiveStats();
   if (loaded) {
     currentCases = [...CASES];
     console.log(`[NyayaMind] ✅ Loaded ${CASES.length} cases from backend`);
@@ -2332,3 +2333,40 @@ function updateModalCompareBtn() {
     btn.style.border = 'none';
   }
 }
+
+
+async function fetchLiveStats() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/status`);
+    const data = await res.json();
+    if (data.success) {
+      const total = data.total || 0;
+      const courts = data.courtsCount || 0;
+      const heroStat = document.getElementById('hero-stat-cases');
+      const indexedStat = document.getElementById('stat-cases-indexed');
+      const courtsStat = document.getElementById('stat-courts-covered');
+      const updatedStat = document.getElementById('stat-last-updated');
+      const mobileStat = document.getElementById('mobile-stat-cases');
+
+      if (heroStat) heroStat.textContent = total.toLocaleString() + '+';
+      if (indexedStat) indexedStat.textContent = total.toLocaleString();
+      if (courtsStat) courtsStat.textContent = courts + '+';
+      if (mobileStat) mobileStat.textContent = total.toLocaleString();
+      if (updatedStat) {
+        const now = new Date();
+        updatedStat.textContent = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', day: 'numeric' });
+      }
+    }
+  } catch (err) {
+    // Fallback: show CASES.length if backend not reachable
+    const total = CASES.length;
+    const heroStat = document.getElementById('hero-stat-cases');
+    const mobileStat = document.getElementById('mobile-stat-cases');
+    if (heroStat && total > 0) heroStat.textContent = total.toLocaleString() + '+';
+    if (mobileStat && total > 0) mobileStat.textContent = total.toLocaleString();
+    console.warn('[NyayaMind] Could not fetch live stats, using local count', err.message);
+  }
+}
+
+// Refresh stats every 60 seconds to stay live
+setInterval(fetchLiveStats, 60000);

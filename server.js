@@ -63,9 +63,18 @@ app.get('/api/cases', async (req, res) => {
 app.get('/api/status', async (req, res) => {
   try {
     const { count, error } = await supabase.from('cases').select('*', { count: 'exact', head: true });
+    
+    // Get unique courts count
+    const { data: courtData, error: courtError } = await supabase.from('cases').select('court');
+    let courtsCount = 50; // default fallback
+    if (courtData) {
+      courtsCount = new Set(courtData.map(c => c.court)).size;
+    }
+
     res.json({
       success: true,
       total: count,
+      courtsCount: courtsCount,
       fetchStatus
     });
   } catch (err) {
