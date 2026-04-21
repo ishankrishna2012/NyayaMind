@@ -2,11 +2,20 @@
   functions = "netlify/functions"
   publish = "."
 
+# Redirect all /api/* calls to the serverless function
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# SPA fallback — serve index.html for any unmatched path
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["node-fetch", "@supabase/supabase-js"]
+
+[build.environment]
+  NODE_VERSION = "18"

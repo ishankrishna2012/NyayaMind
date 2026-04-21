@@ -1,6 +1,13 @@
 'use strict';
 
 // ================================================
+// BACKEND URL — auto-detects Netlify vs localhost
+// ================================================
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '' // relative URLs work on localhost (server.js serves everything)
+  : ''; // on Netlify, /api/* is redirected to /.netlify/functions/api via netlify.toml
+
+// ================================================
 // CASE DATA — Loaded from backend (server.js)
 // Falls back to empty array until loaded
 // ================================================
@@ -28,8 +35,10 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
 async function loadCasesFromBackend(query = '', filter = 'all') {
   try {
-    const { data, error } = await supabase.from('cases').select('*');
-    if (error) throw error;
+    const res = await fetch('/api/cases?limit=200');
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Failed to fetch cases');
+    const data = json.cases;
 
     if (data && Array.isArray(data)) {
       CASES = data.map(c => ({
@@ -99,10 +108,11 @@ function toggleCompare(id, e) {
 
 function renderCompareTray() {
   const tray = document.getElementById('compare-tray');
+  if (!tray) return; // tray is optional (removed from HTML)
   const ctCases = document.getElementById('ct-cases');
   const ctLabel = document.getElementById('ct-label');
   const ctBtn = document.getElementById('ct-compare-btn');
-  if (!tray) return;
+  if (!ctCases || !ctLabel || !ctBtn) return;
 
   tray.classList.toggle('visible', compareList.length > 0);
   ctLabel.textContent = `${compareList.length} case${compareList.length !== 1 ? 's' : ''} selected`;
@@ -426,14 +436,8 @@ function buildComparisonHTML(cases) {
 
 // Toast for compare limit
 function showCompareToast(msg) {
-  // Reuse translate toast styling
-  const t = document.getElementById('translate-toast');
-  const m = document.getElementById('translate-toast-msg');
-  if (t && m) {
-    m.textContent = msg;
-    t.style.display = 'flex';
-    setTimeout(() => t.style.display = 'none', 3000);
-  }
+  // Use pdf-toast style (dynamically created) since translate-toast was removed
+  showPdfToast(msg);
 }
 
 // ================================================
@@ -531,8 +535,19 @@ function toggleVoiceSearch() {
   if (isListening) { stopVoice(); return; }
   recognition = new SpeechRec();
   recognition.lang = 'en-IN'; recognition.interimResults = false; recognition.maxAlternatives = 1;
-  recognition.onstart = () => { isListening = true; document.getElementById('micBtn').classList.add('listening'); document.getElementById('voice-toast').classList.add('show'); };
-  recognition.onresult = (event) => { const t = event.results[0][0].transcript; const inp = document.getElementById('searchInput'); if (inp) { inp.value = t; filterCases(); } stopVoice(); };
+  recognition.onstart = () => {
+    isListening = true;
+    const mb = document.getElementById('micBtn'); if (mb) mb.classList.add('listening');
+    // voice-toast is optional
+    const vt = document.getElementById('voice-toast'); if (vt) vt.classList.add('show');
+    showPdfToast('🎤 Listening…');
+  };
+  recognition.onresult = (event) => {
+    const t = event.results[0][0].transcript;
+    const inp = document.getElementById('searchInput') || document.getElementById('searchInputPub');
+    if (inp) { inp.value = t; filterCases(); }
+    stopVoice();
+  };
   recognition.onerror = (event) => { stopVoice(); if (event.error === 'not-allowed') alert('Microphone access denied.'); };
   recognition.onend = () => { stopVoice(); };
   recognition.start();
@@ -1003,15 +1018,19 @@ function loadAppearancePrefs() { try { const theme = localStorage.getItem('nyaya
 // ================================================
 document.getElementById('hamburger')?.addEventListener('click', () => { document.getElementById('mobile-menu').classList.toggle('open'); });
 function closeMobile() { document.getElementById('mobile-menu')?.classList.remove('open'); }
+
+// closeModal — safe stub (case modal is now closeCaseModal)
+function closeModal() { closeCaseModal(); stopVoice(); }
+
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); stopVoice(); } });
 
 // AI stubs (kept for compatibility)
 const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE";
-async function aiSearchCase(title) { const modal = document.getElementById('ai-modal'); const content = document.getElementById('ai-content'); const heading = document.getElementById('ai-title'); heading.textContent = "AI Explanation: " + title; content.innerHTML = "⏳ Thinking…"; modal.classList.add('open'); const caseData = CASES.find(c => c.title === title); if (!caseData) { content.textContent = "No information available."; return; } content.innerHTML = `<strong>${caseData.title}</strong><br><br>${caseData.summary}`; }
+async function aiSearchCase(title) { const caseData = CASES.find(c => c.title === title); if (caseData) openCase(caseData.id); }
 function speakText(text) { if (!window.speechSynthesis) return; const speech = new SpeechSynthesisUtterance(text); speech.lang = "en-IN"; speech.rate = 0.95; window.speechSynthesis.cancel(); window.speechSynthesis.speak(speech); }
 function formatAIResponse(text) { return text.replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"); }
-async function askFollowup() { const q = document.getElementById("ai-question").value; const content = document.getElementById("ai-content"); if (!q) return; content.innerHTML = "⏳ Thinking…"; }
-function closeAiModal() { document.getElementById('ai-modal').classList.remove('open'); }
+async function askFollowup() { }
+function closeAiModal() { const m = document.getElementById('ai-modal'); if (m) m.classList.remove('open'); }
 
 // ================================================
 // INIT
@@ -1029,16 +1048,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ── Load cases from backend (30 hardcoded + live Kanoon API) ──
+  // ── Load cases from backend (Supabase) ──
   const loaded = await loadCasesFromBackend();
   fetchLiveStats();
   if (loaded) {
     currentCases = [...CASES];
     console.log(`[NyayaMind] ✅ Loaded ${CASES.length} cases from backend`);
+    // Re-render gallery if dashboard is already visible
+    const dashPage = document.getElementById('page-dashboard');
+    if (dashPage && dashPage.classList.contains('active')) {
+      filterCases();
+    }
   } else {
-    console.warn('[NyayaMind] ⚠️ Backend offline — cases will load when server.js is running');
+    console.warn('[NyayaMind] ⚠️ Supabase not reachable — check env vars');
   }
-  // Poll every 15s to pick up newly-fetched live cases from Kanoon API
+  // Poll every 15s to pick up newly-fetched live cases
   startLiveCasePolling();
 });
 
@@ -1207,7 +1231,10 @@ const DEPARTMENTS = [
 
 
 // ── Combined pool: CASES + DEPT_EXTRA_CASES ──
-const ALL_CASES_POOL = [...CASES, ...DEPT_EXTRA_CASES];
+// Computed dynamically so CASES from Supabase are always included
+function getAllCasesPool() {
+  return [...CASES, ...DEPT_EXTRA_CASES];
+}
 
 /**
  * Compute all cases relevant to a department.
@@ -1217,7 +1244,8 @@ function getDeptCases(deptId) {
   const dept = DEPARTMENTS.find(d => d.id === deptId);
   if (!dept) return [];
 
-  const scored = ALL_CASES_POOL.map(c => {
+  const pool = getAllCasesPool();
+  const scored = pool.map(c => {
     // Always include extra cases assigned directly
     if (dept.extraCaseIds.includes(c.id)) {
       return { case: c, score: 100 };
@@ -1354,8 +1382,8 @@ function renderDeptCards() {
   galleryContainer.style.display = 'block';
   grid.style.display = 'none'; // Hide grid since we show gallery
 
-  // Init Gallery
-  const casesToRender = scored.map(s => s.case);
+  // Init Gallery — wrap each case in {caseData} format required by gallery.js
+  const casesToRender = scored.map(s => ({ caseData: s.case }));
   if (deptGalleryInstance) {
     deptGalleryInstance.destroy();
   }
@@ -2185,19 +2213,17 @@ function showPdfToast(msg) {
 let activeCaseForChat = null;
 
 function openCase(id) {
-  const c = CASES.find(x => String(x.id) === String(id));
+  const c = CASES.find(x => String(x.id) === String(id)) ||
+            DEPT_EXTRA_CASES.find(x => String(x.id) === String(id));
   if (!c) return;
   
-  // Track history
-  const user = getUser();
-  if (user) {
-    if (!user.history) user.history = [];
-    user.history = user.history.filter(h => String(h.id) !== String(id));
-    user.history.unshift(c);
-    if (user.history.length > 50) user.history.pop();
-    saveUser(user);
-    updateNavForUser(user);
-  }
+  // Track history in 'history' localStorage key (used by renderHistViewed)
+  try {
+    const hist = JSON.parse(localStorage.getItem('history') || '[]');
+    const filtered = hist.filter(h => String(h.id) !== String(id));
+    filtered.unshift({ ...c, time: Date.now() });
+    localStorage.setItem('history', JSON.stringify(filtered.slice(0, 50)));
+  } catch(e) {}
 
   activeCaseForChat = c;
   
