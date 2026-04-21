@@ -186,7 +186,7 @@ exports.handler = async (event) => {
       let system = 'You are NyayaMind, an expert Indian legal AI assistant. Be concise and accurate.';
       if (caseContext) system += ` The user is asking about: "${caseContext.title}" (${caseContext.court}, ${caseContext.year}). Summary: ${caseContext.summary}`;
       const completion = await openai.chat.completions.create({
-        model: process.env.AI_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+        model: process.env.AI_MODEL || 'openrouter/free',
         messages: [{ role: 'system', content: system }, { role: 'user', content: message }],
         temperature: 0.7, max_tokens: 500
       });
@@ -202,7 +202,7 @@ exports.handler = async (event) => {
     if (!query) return json(400, { success: false, error: 'Query required' });
     try {
       const completion = await openai.chat.completions.create({
-        model: process.env.AI_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+        model: process.env.AI_MODEL || 'openrouter/free',
         messages: [
           { role: 'system', content: 'Extract core Indian legal keywords from the query. Return ONLY comma-separated keywords. No prose.' },
           { role: 'user', content: query }

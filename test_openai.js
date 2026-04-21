@@ -1,0 +1,1 @@
+const {OpenAI} = require('openai'); require('dotenv').config(); const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY.replace(/\"/g, '') }); openai.chat.completions.create({model: 'gpt-4o', messages: [{role: 'user', content: 'hello'}], max_tokens: 10}).then(console.log).catch(console.error)
