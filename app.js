@@ -546,19 +546,6 @@ function saveUser(u) { localStorage.setItem('nyayaUser', JSON.stringify(u)); }
 
 
 // ================================================
-// SARVAM TRANSLATION
-// ================================================
-const translationCache = {};
-, body: JSON.stringify({ input: text.slice(0, 1000), source_language_code: 'en-IN', target_language_code: targetLang, model: 'mayura:v1', mode: 'modern-colloquial' }) });
-    if (!resp.ok) return text;
-    const data = await resp.json(); const translated = data.translated_text || text;
-    translationCache[cacheKey] = translated; return translated;
-  } catch(e) { return text; }
-}
- }
-
-
-// ================================================
 // PAGE NAVIGATION
 // ================================================
 function showPage(name) {
@@ -652,18 +639,6 @@ function initSignupPage() {
 }
 
 
-  else { note.innerHTML = `ℹ️ No Sarvam API key — only English will work. <a href="#" onclick="showSarvamKeyPrompt()">Add key →</a>`; note.className = 'sarvam-note sarvam-note-warn'; }
-}
-); }
- return; }
-  showTranslateToast('Testing Sarvam AI key…');
-  try {
-    const resp = await fetch('https://api.sarvam.ai/translate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'api-subscription-key': key }, body: JSON.stringify({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'mayura:v1' }) });
-    hideTranslateToast();
-    if (resp.ok) { setSarvamKey(key); document.getElementById('sarvam-key-prompt').style.display = 'none'; if (errorEl) errorEl.style.display = 'none';  }
-    else { const err = await resp.json().catch(() => ({})); if (errorEl) { errorEl.textContent = 'Invalid key: ' + (err.message || resp.status); errorEl.style.display = 'block'; } }
-  } catch(e) { hideTranslateToast(); if (errorEl) { errorEl.textContent = 'Could not reach Sarvam AI.'; errorEl.style.display = 'block'; } }
-}
 
 function suNext(step) {
   if (step === 1) {
@@ -948,7 +923,7 @@ function initDashboard() {
 function initProDash(user) {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount(); const first = user.name.split(' ')[0];
   document.getElementById('dash-pro-greeting').textContent = `Welcome back, ${first}`;
-   const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
+   const langNote = user.language;
   document.getElementById('dash-pro-lang').textContent = `Language: ${langNote} · Professional Access`;
   animateCount('pro-stat-bookmarks', bm); animateCount('pro-stat-history', hist); animateCount('pro-stat-useful', useful);
   const pb = document.getElementById('pro-bm-bar'); if (pb) pb.style.width = Math.min(bm * 5, 100) + '%';
@@ -962,7 +937,7 @@ function initProDash(user) {
 function initPubDash(user) {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount(); const first = user.name.split(' ')[0];
   document.getElementById('dash-pub-greeting').textContent = `Welcome, ${first}`;
-   const langNote = user.langCode !== 'en-IN' ? (key ? `🌐 ${user.language} (Sarvam AI active)` : `${user.language} (add Sarvam key)`) : user.language;
+   const langNote = user.language;
   document.getElementById('dash-pub-lang').textContent = `Language: ${langNote} · Citizen Access`;
   animateCount('pub-stat-bookmarks', bm); animateCount('pub-stat-history', hist); animateCount('pub-stat-useful', useful);
   const pb = document.getElementById('pub-bm-bar'); if (pb) pb.style.width = Math.min(bm * 5, 100) + '%';
@@ -1001,7 +976,7 @@ function initProfilePage() {
   const roleDisplay = document.getElementById('prof-role-display'); if (roleDisplay) roleDisplay.textContent = user.role === 'professional' ? '⚖️ Law Professional' : '👤 General Public';
   const joinedDisplay = document.getElementById('prof-joined-display'); if (joinedDisplay) joinedDisplay.textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown';
   const langGrid = document.getElementById('prof-lang-grid'); if (langGrid) { langGrid.querySelectorAll('.lang-opt').forEach(opt => { opt.classList.toggle('selected', opt.textContent.trim().includes(user.language) || (user.language === 'English' && opt.textContent.includes('English'))); }); }
-  const sarvamKeyInput = document.getElementById('prof-sarvam-key'); if (sarvamKeyInput) sarvamKeyInput.value = getSarvamKey();
+  
   profBack('prof-menu'); loadNotifPrefs(); loadPrivacyPrefs(); loadAppearancePrefs();
 }
 function profOpen(sid) { document.getElementById('prof-menu').style.display = 'none'; document.querySelectorAll('#profile-settings .sub-section').forEach(s => s.style.display = 'none'); const sec = document.getElementById(sid); if (sec) sec.style.display = 'block'; }
@@ -1020,15 +995,7 @@ function setProfLang(el, lang, code) {
   const accounts = getAllAccounts(); const idx = accounts.findIndex(a => a.email === user.email); if (idx >= 0) { accounts[idx].language = lang; accounts[idx].langCode = code; saveAllAccounts(accounts); }
   document.querySelectorAll('#prof-lang-grid .lang-opt').forEach(o => o.classList.remove('selected')); el.classList.add('selected');
 }
- return; }
-  showTranslateToast('Verifying Sarvam AI key…');
-  try {
-    const resp = await fetch('https://api.sarvam.ai/translate', { method: 'POST', headers: { 'Content-Type': 'application/json', 'api-subscription-key': key }, body: JSON.stringify({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'mayura:v1' }) });
-    hideTranslateToast();
-    if (resp.ok) { setSarvamKey(key); if (msgEl) { msgEl.textContent = '✅ Sarvam AI key updated and verified!'; msgEl.style.color = '#4ade80'; msgEl.style.display = 'block'; setTimeout(() => msgEl.style.display = 'none', 3000); } }
-    else { if (msgEl) { msgEl.textContent = '❌ Invalid key.'; msgEl.style.color = '#f87171'; msgEl.style.display = 'block'; } }
-  } catch(e) { hideTranslateToast(); if (msgEl) { msgEl.textContent = '❌ Network error.'; msgEl.style.color = '#f87171'; msgEl.style.display = 'block'; } }
-}
+
 function saveNotifPref() { const prefs = { cases: document.getElementById('notif-cases')?.checked, ai: document.getElementById('notif-ai')?.checked, digest: document.getElementById('notif-digest')?.checked, bookmark: document.getElementById('notif-bookmark')?.checked }; localStorage.setItem('notifPrefs', JSON.stringify(prefs)); }
 function loadNotifPrefs() { try { const prefs = JSON.parse(localStorage.getItem('notifPrefs') || '{}'); if (prefs.cases !== undefined && document.getElementById('notif-cases')) document.getElementById('notif-cases').checked = prefs.cases; if (prefs.ai !== undefined && document.getElementById('notif-ai')) document.getElementById('notif-ai').checked = prefs.ai; if (prefs.digest !== undefined && document.getElementById('notif-digest')) document.getElementById('notif-digest').checked = prefs.digest; if (prefs.bookmark !== undefined && document.getElementById('notif-bookmark')) document.getElementById('notif-bookmark').checked = prefs.bookmark; } catch(e) {} }
 function savePrivacyPref() { const prefs = { searchHist: document.getElementById('priv-search-hist')?.checked, caseHist: document.getElementById('priv-case-hist')?.checked, analytics: document.getElementById('priv-analytics')?.checked }; localStorage.setItem('privacyPrefs', JSON.stringify(prefs)); }
