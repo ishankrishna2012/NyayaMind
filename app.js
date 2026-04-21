@@ -212,6 +212,17 @@ function updateDashboardCaseCount() {
         if (caseCountEl) caseCountEl.textContent = `${CASES.length} cases available`;
         const heroStatEl = document.getElementById('hero-stat-cases');
         if (heroStatEl) heroStatEl.textContent = CASES.length;
+        
+        // Re-render dashboard if user is on it
+        const activePage = document.querySelector('.page.active');
+        if (activePage && activePage.id === 'page-dashboard') {
+          const user = getUser();
+          if (user) {
+            if (user.role === 'professional') initProDash(user);
+            else if (user.role === 'public') initPubDash(user);
+            else initDefaultDash();
+          }
+        }
       }
     });
   } else {
@@ -1168,7 +1179,7 @@ function initProDash(user) {
   const ph = document.getElementById('pro-hist-bar'); if (ph) ph.style.width = Math.min(hist * 3, 100) + '%';
   const pu = document.getElementById('pro-useful-bar'); if (pu) pu.style.width = Math.min(useful * 10, 100) + '%';
   const rcEl = document.getElementById('pro-recent-cases');
-  if (rcEl) rcEl.innerHTML = CASES.slice(0, 5).map(c => `<div class="pro-case-item" onclick="openCase(${c.id})"><div class="pci-meta">${c.court} · ${c.year}</div><div class="pci-title">${c.title}</div><span class="pci-tag">${c.type}</span></div>`).join('');
+  if (rcEl) rcEl.innerHTML = CASES.slice(0, 5).map(c => `<div class="pro-case-item" onclick="openCase('${c.id}')"><div class="pci-meta">${c.court} · ${c.year}</div><div class="pci-title">${c.title}</div><span class="pci-tag">${c.type}</span></div>`).join('');
   const feed = document.getElementById('pro-activity-feed');
   if (feed) feed.innerHTML = ['🔍 Research query: ' + (getSearchHist()[0] || 'Constitutional Law'), '📁 New case indexed: Navtej Singh Johar v. Union of India', '🔖 Case bookmarked: ' + (getBookmarks()[0]?.title?.slice(0, 35) || 'Kesavananda Bharati'), '⚖️ Supreme Court database updated', '🤖 AI query processed in 1.2s'].map((a, i) => `<div class="activity-item" style="animation-delay:${i * 0.1}s"><div class="ai-dot"></div><span>${a}</span></div>`).join('');
 }
