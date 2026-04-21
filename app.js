@@ -1330,9 +1330,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (loaded) {
     currentCases = [...CASES];
     console.log(`[NyayaMind] ✅ Loaded ${CASES.length} cases from backend`);
-    // Re-render gallery if dashboard is already visible
+    // Re-render gallery if dashboard or cases page is already visible
     const dashPage = document.getElementById('page-dashboard');
-    if (dashPage && dashPage.classList.contains('active')) {
+    const casesPage = document.getElementById('page-cases');
+    if ((dashPage && dashPage.classList.contains('active')) || (casesPage && casesPage.classList.contains('active'))) {
       filterCases();
     }
   } else {
