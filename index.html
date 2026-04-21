@@ -145,7 +145,11 @@
       </div>
       <div class="su-field">
         <label>Email Address</label>
-        <input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()" />
+        <input type="email" id="login-email" placeholder="your@email.com" />
+      </div>
+      <div class="su-field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
       </div>
       <div id="login-error" class="auth-error" style="display:none"></div>
       <button class="su-btn" onclick="doLogin()">Sign In →</button>
@@ -174,15 +178,15 @@
 <!-- Removed Sarvam key prompt -->
         <div class="signup-steps">
           <div class="step-dot active" id="sdot-1">1</div><div class="step-line"></div>
-          <div class="step-dot" id="sdot-2">2</div><div class="step-line"></div>
-          <div class="step-dot" id="sdot-3">3</div>
+          <div class="step-dot" id="sdot-2">2</div>
         </div>
         <div class="signup-step" id="step-1">
           <h2 class="su-title">Create Your Account</h2>
           <p class="su-sub">Start with the basics</p>
           <div class="su-field"><label>Full Name</label><input type="text" id="su-name" placeholder="e.g. Arjun Sharma" /></div>
           <div class="su-field"><label>Email Address</label><input type="email" id="su-email" placeholder="e.g. arjun@lawfirm.in" /></div>
-          <div id="su-email-taken" class="auth-error" style="display:none">An account with this email already exists. <a href="#" onclick="showPage('login')">Log in instead →</a></div>
+          <div class="su-field"><label>Password</label><input type="password" id="su-password" placeholder="Create a strong password" /></div>
+          <div id="su-auth-error" class="auth-error" style="display:none"></div>
           <button class="su-btn" onclick="suNext(1)">Continue →</button>
           <div class="auth-switch">Already have an account? <a href="#" onclick="showPage('login')">Log in →</a></div>
         </div>
@@ -193,23 +197,7 @@
             <div class="role-card" id="role-pro" onclick="selectRole('professional')"><div class="role-icon">⚖️</div><strong>Law Professional</strong><p>Advocate, Judge, Legal Researcher, Law Student</p><div class="role-check">✓</div></div>
             <div class="role-card" id="role-pub" onclick="selectRole('public')"><div class="role-icon">👤</div><strong>General Public</strong><p>Citizen seeking legal guidance or awareness</p><div class="role-check">✓</div></div>
           </div>
-          <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(2)">← Back</button><button class="su-btn" onclick="suNext(2)">Continue →</button></div>
-        </div>
-        <div class="signup-step" id="step-3" style="display:none">
-          <h2 class="su-title">Preferred Language</h2>
-          <p class="su-sub">Select your preferred language</p>
-          <div class="lang-grid">
-            <div class="lang-opt selected" onclick="selectLang(this,'English','en-IN')"><span>🇬🇧</span>English</div>
-            <div class="lang-opt" onclick="selectLang(this,'Hindi','hi-IN')"><span>🇮🇳</span>हिन्दी</div>
-            <div class="lang-opt" onclick="selectLang(this,'Tamil','ta-IN')"><span>🏛</span>தமிழ்</div>
-            <div class="lang-opt" onclick="selectLang(this,'Telugu','te-IN')"><span>🌿</span>తెలుగు</div>
-            <div class="lang-opt" onclick="selectLang(this,'Kannada','kn-IN')"><span>🌺</span>ಕನ್ನಡ</div>
-            <div class="lang-opt" onclick="selectLang(this,'Bengali','bn-IN')"><span>📖</span>বাংলা</div>
-            <div class="lang-opt" onclick="selectLang(this,'Marathi','mr-IN')"><span>🎭</span>मराठी</div>
-            <div class="lang-opt" onclick="selectLang(this,'Gujarati','gu-IN')"><span>🌸</span>ગુજરાતી</div>
-          </div>
-<!-- Removed Sarvam status note -->
-          <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(3)">← Back</button><button class="su-btn" onclick="suSubmit()">Create Account →</button></div>
+          <div class="su-nav"><button class="su-btn-ghost" onclick="suBack(2)">← Back</button><button class="su-btn" onclick="suSubmit()">Create Account →</button></div>
         </div>
         <div class="signup-step" id="step-success" style="display:none">
           <div class="su-success">
@@ -571,7 +559,6 @@
       <h2 class="profile-section-heading">⚙️ Settings</h2>
       <div id="prof-menu">
         <div class="option-card" onclick="profOpen('prof-account')">🧑 Account Information <span>›</span></div>
-        <div class="option-card" onclick="profOpen('prof-language')">🌐 Language & Translation <span>›</span></div>
         <div class="option-card" onclick="profOpen('prof-notifications')">🔔 Notifications <span>›</span></div>
         <div class="option-card" onclick="profOpen('prof-privacy')">🔒 Privacy & Data <span>›</span></div>
         <div class="option-card" onclick="profOpen('prof-appearance')">🎨 Appearance <span>›</span></div>
@@ -610,16 +597,13 @@
 
 <!-- ======= COMPARE TRAY (Removed) ======= -->
 
-<!-- TRANSLATION TOAST -->
-<div id="translate-toast" class="translate-toast" style="display:none">
-  <div class="tt-spinner"></div>
-  <span id="translate-toast-msg">Translating via Sarvam AI…</span>
-</div>
+<!-- TRANSLATION TOAST (Removed) -->
 
 <!-- VOICE TOAST (Removed) -->
 <!-- AI MODAL (Removed) -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="module" src="threads.js"></script>
 <script type="module" src="gallery.js"></script>
 <script src="app.js"></script>

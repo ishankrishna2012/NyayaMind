@@ -8,21 +8,31 @@ let CASES = [];
 let _casesLoaded = false;
 let _casesFetchInterval = null;
 
-const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname) ? 'http://localhost:3000' : '';
+const SUPABASE_URL = 'https://bpeokbocsxijbjnbtivp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_YZ84jwL7tJDZFSciVGXwbw_mKrWZCfB';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+    if (profile) {
+      const userObj = { ...profile, email: session.user.email };
+      saveUser(userObj);
+      updateNavForUser(userObj);
+    }
+  } else {
+    saveUser(null);
+    updateNavForUser(null);
+  }
+});
 
 async function loadCasesFromBackend(query = '', filter = 'all') {
   try {
-    let apiUrl = `${BACKEND_URL}/api/cases?limit=200`;
-    if (query) apiUrl += `&q=${encodeURIComponent(query)}`;
-    if (filter && filter !== 'all') apiUrl += `&type=${encodeURIComponent(filter)}`;
+    const { data, error } = await supabase.from('cases').select('*');
+    if (error) throw error;
 
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    if (data.success && Array.isArray(data.cases)) {
-      // Normalize to the shape the rest of the app expects
-      CASES = data.cases.map(c => ({
+    if (data && Array.isArray(data)) {
+      CASES = data.map(c => ({
         id: c.id,
         title: c.title,
         court: c.court,
@@ -32,18 +42,17 @@ async function loadCasesFromBackend(query = '', filter = 'all') {
         summary: c.summary,
         keywords: c.tags || [],
         views: c.views || 0,
-        source: c.source || 'backend'
+        source: c.source || 'supabase'
       }));
       _casesLoaded = true;
 
-      // Update the live case count badge if present
       const badge = document.getElementById('live-case-count');
-      if (badge) badge.textContent = `${data.total} cases loaded (${data.live} from Kanoon API)`;
+      if (badge) badge.textContent = `${data.length} cases loaded`;
 
       return true;
     }
   } catch (err) {
-    console.warn('[NyayaMind] Backend not reachable, using offline data.', err.message);
+    console.warn('[NyayaMind] Supabase not reachable.', err.message);
   }
   return false;
 }
@@ -594,23 +603,22 @@ function initTypewriter() {
 // LOGIN
 // ================================================
 function initLoginPage() {
-  const accounts = getAllAccounts(); const savedSection = document.getElementById('saved-accounts-section'); const savedList = document.getElementById('saved-accounts-list'); const loginError = document.getElementById('login-error'); const emailInput = document.getElementById('login-email');
-  if (loginError) loginError.style.display = 'none'; if (emailInput) emailInput.value = '';
-  if (accounts.length > 0 && savedSection && savedList) {
-    savedSection.style.display = 'block';
-    savedList.innerHTML = accounts.map(acc => `<div class="saved-account-card" onclick="loginAs('${acc.email}')"><div class="sac-avatar">${acc.name.charAt(0).toUpperCase()}</div><div class="sac-info"><strong>${acc.name}</strong><span>${acc.email}</span><em>${acc.role === 'professional' ? '⚖️ Law Professional' : '👤 General Public'} · ${acc.language}</em></div><div class="sac-arrow">→</div></div>`).join('');
-  } else if (savedSection) { savedSection.style.display = 'none'; }
+  const loginError = document.getElementById('login-error'); const emailInput = document.getElementById('login-email'); const passInput = document.getElementById('login-password');
+  if (loginError) loginError.style.display = 'none'; if (emailInput) emailInput.value = ''; if (passInput) passInput.value = '';
+  const savedSection = document.getElementById('saved-accounts-section'); 
+  if (savedSection) savedSection.style.display = 'none';
 }
-function loginAs(email) { const account = getAllAccounts().find(a => a.email === email); if (!account) return; saveUser(account); updateNavForUser(account); showPage('dashboard'); }
-function doLogin() {
-  const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase(); const errorEl = document.getElementById('login-error');
+async function doLogin() {
+  const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase(); 
+  const password = document.getElementById('login-password')?.value || '';
+  const errorEl = document.getElementById('login-error');
   if (!email || !email.includes('@')) { showAuthError(errorEl, 'Please enter a valid email address.'); return; }
-  const match = getAllAccounts().find(a => a.email === email);
-  if (match) { saveUser(match); updateNavForUser(match); showPage('dashboard'); }
-  else { showAuthError(errorEl, 'No account found with this email. <a href="#" onclick="showPage(\'signup\')">Sign up →</a>'); }
+  if (!password) { showAuthError(errorEl, 'Please enter a password.'); return; }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { showAuthError(errorEl, error.message); } else { showPage('dashboard'); }
 }
 function showAuthError(el, msg) { if (!el) return; el.innerHTML = msg; el.style.display = 'block'; setTimeout(() => { if (el) el.style.display = 'none'; }, 5000); }
-function logout() { saveUser(null); localStorage.removeItem('nyayaUser'); updateNavForUser(null); showPage('login'); }
+async function logout() { await supabase.auth.signOut(); saveUser(null); localStorage.removeItem('nyayaUser'); updateNavForUser(null); showPage('login'); }
 function confirmLogout() { if (confirm('Are you sure you want to sign out?')) logout(); }
 function updateNavForUser(user) {
   const guestActions = document.getElementById('nav-guest-actions'); const navUser = document.getElementById('nav-user'); const navUserName = document.getElementById('nav-user-name'); const navAvatar = document.getElementById('nav-user-avatar');
@@ -621,71 +629,62 @@ function updateNavForUser(user) {
 // ================================================
 // SIGN UP
 // ================================================
-let suData = { name: '', email: '', role: '', language: 'English', langCode: 'en-IN' };
+let suData = { name: '', email: '', password: '', role: '' };
 function initSignupPage() {
-  suData = { name: '', email: '', role: '', language: 'English', langCode: 'en-IN' };
+  suData = { name: '', email: '', password: '', role: '' };
   goToStep(1);
-  document.getElementById('su-name').value = ''; document.getElementById('su-email').value = ''; document.getElementById('su-email-taken').style.display = 'none';
+  document.getElementById('su-name').value = ''; document.getElementById('su-email').value = ''; document.getElementById('su-password').value = ''; document.getElementById('su-auth-error').style.display = 'none';
   document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('.lang-opt').forEach(o => o.classList.remove('selected'));
-  document.querySelector('.lang-opt')?.classList.add('selected');
   
-  // Reset to General Public defaults: blue bg + robot visible
   const signupPage = document.getElementById('page-signup');
   if (signupPage) signupPage.classList.remove('professional-signup');
   const robotLayer = document.getElementById('robot-bg-layer');
   if (robotLayer) robotLayer.classList.add('active');
-  
 }
-
-
 
 function suNext(step) {
   if (step === 1) {
-    const name = document.getElementById('su-name').value.trim(); const email = document.getElementById('su-email').value.trim().toLowerCase(); const takenEl = document.getElementById('su-email-taken');
+    const name = document.getElementById('su-name').value.trim(); const email = document.getElementById('su-email').value.trim().toLowerCase(); const password = document.getElementById('su-password').value; const errorEl = document.getElementById('su-auth-error');
     if (!name) { shakeField('su-name', 'Please enter your name'); return; }
     if (!email || !email.includes('@')) { shakeField('su-email', 'Enter a valid email'); return; }
-    const existing = getAllAccounts().find(a => a.email === email);
-    if (existing) { takenEl.style.display = 'block'; return; }
-    takenEl.style.display = 'none'; suData.name = name; suData.email = email; goToStep(2);
-  } else if (step === 2) { if (!suData.role) { alert('Please select a role.'); return; } goToStep(3);  }
+    if (password.length < 6) { shakeField('su-password', 'Password must be 6+ chars'); return; }
+    errorEl.style.display = 'none'; suData.name = name; suData.email = email; suData.password = password; goToStep(2);
+  }
 }
 function suBack(step) { goToStep(step - 1); }
 function goToStep(n) {
   document.querySelectorAll('.signup-step').forEach(s => s.style.display = 'none');
   const target = document.getElementById('step-' + n); if (target) target.style.display = 'block';
-  [1,2,3].forEach(i => { const dot = document.getElementById('sdot-' + i); if (!dot) return; dot.classList.toggle('active', i <= n); dot.classList.toggle('done', i < n); });
+  [1,2].forEach(i => { const dot = document.getElementById('sdot-' + i); if (!dot) return; dot.classList.toggle('active', i <= n); dot.classList.toggle('done', i < n); });
 }
 function selectRole(role) {
   suData.role = role;
   document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
   document.getElementById(role === 'professional' ? 'role-pro' : 'role-pub').classList.add('selected');
-
-  // Dynamically switch signup page background & robot based on role
   const signupPage = document.getElementById('page-signup');
   const robotLayer = document.getElementById('robot-bg-layer');
   if (role === 'professional') {
-    // Law Professional → Lady Justice background, no robot
     if (signupPage) signupPage.classList.add('professional-signup');
     if (robotLayer) robotLayer.classList.remove('active');
   } else {
-    // General Public → Blue texture background + robot
     if (signupPage) signupPage.classList.remove('professional-signup');
     if (robotLayer) robotLayer.classList.add('active');
   }
 }
 
-function selectLang(el, lang, code) { suData.language = lang; suData.langCode = code; document.querySelectorAll('.lang-opt').forEach(o => o.classList.remove('selected')); el.classList.add('selected'); }
 async function suSubmit() {
-  const newAccount = { name: suData.name, email: suData.email, role: suData.role, language: suData.language, langCode: suData.langCode, createdAt: Date.now() };
-  const accounts = getAllAccounts(); accounts.push(newAccount); saveAllAccounts(accounts);
-  saveUser(newAccount); updateNavForUser(newAccount);
+  if (!suData.role) { alert('Please select a role.'); return; }
+  const { data, error } = await supabase.auth.signUp({
+    email: suData.email,
+    password: suData.password,
+    options: { data: { name: suData.name, role: suData.role } }
+  });
+  if (error) { alert('Signup error: ' + error.message); return; }
+  
   document.querySelectorAll('.signup-step').forEach(s => s.style.display = 'none');
   document.getElementById('step-success').style.display = 'block';
   const roleLabel = suData.role === 'professional' ? 'Law Professional' : 'General Public';
-  
-  const transNote = key && suData.langCode !== 'en-IN' ? ` Case summaries will be translated to ${suData.language} via Sarvam AI.` : suData.langCode !== 'en-IN' ? ` Add a Sarvam API key to enable ${suData.language} translation.` : '';
-  document.getElementById('su-welcome-msg').textContent = `You're registered as a ${roleLabel}.${transNote}`;
+  document.getElementById('su-welcome-msg').textContent = `You're registered as a ${roleLabel}.`;
 }
 function goToDashboard() { showPage('dashboard'); }
 function shakeField(id, placeholder) { const el = document.getElementById(id); if (!el) return; el.placeholder = placeholder; el.style.borderColor = '#ef4444'; el.classList.add('field-error'); setTimeout(() => { el.classList.remove('field-error'); el.style.borderColor = ''; }, 1800); }
@@ -975,25 +974,19 @@ function initProfilePage() {
   const emailInput = document.getElementById('prof-email-input'); if (emailInput) emailInput.value = user.email;
   const roleDisplay = document.getElementById('prof-role-display'); if (roleDisplay) roleDisplay.textContent = user.role === 'professional' ? '⚖️ Law Professional' : '👤 General Public';
   const joinedDisplay = document.getElementById('prof-joined-display'); if (joinedDisplay) joinedDisplay.textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown';
-  const langGrid = document.getElementById('prof-lang-grid'); if (langGrid) { langGrid.querySelectorAll('.lang-opt').forEach(opt => { opt.classList.toggle('selected', opt.textContent.trim().includes(user.language) || (user.language === 'English' && opt.textContent.includes('English'))); }); }
   
   profBack('prof-menu'); loadNotifPrefs(); loadPrivacyPrefs(); loadAppearancePrefs();
 }
 function profOpen(sid) { document.getElementById('prof-menu').style.display = 'none'; document.querySelectorAll('#profile-settings .sub-section').forEach(s => s.style.display = 'none'); const sec = document.getElementById(sid); if (sec) sec.style.display = 'block'; }
 function profBack(menuId) { document.querySelectorAll('#profile-settings .sub-section').forEach(s => s.style.display = 'none'); const menu = document.getElementById(menuId); if (menu) menu.style.display = 'block'; }
-function saveProfileInfo() {
+async function saveProfileInfo() {
   const user = getUser(); if (!user) return; const nameInput = document.getElementById('prof-name-input'); const newName = nameInput?.value.trim();
   if (!newName) { nameInput.style.borderColor = '#ef4444'; setTimeout(() => nameInput.style.borderColor = '', 1500); return; }
   user.name = newName; saveUser(user);
-  const accounts = getAllAccounts(); const idx = accounts.findIndex(a => a.email === user.email); if (idx >= 0) { accounts[idx].name = newName; saveAllAccounts(accounts); }
+  await supabase.from('user_profiles').update({ name: newName }).eq('id', user.id);
   updateNavForUser(user); document.getElementById('profile-name-display').textContent = newName;
   const initials = newName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); document.getElementById('profile-avatar-initials').textContent = initials;
   const msg = document.getElementById('prof-save-msg'); if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
-}
-function setProfLang(el, lang, code) {
-  const user = getUser(); if (!user) return; user.language = lang; user.langCode = code; saveUser(user);
-  const accounts = getAllAccounts(); const idx = accounts.findIndex(a => a.email === user.email); if (idx >= 0) { accounts[idx].language = lang; accounts[idx].langCode = code; saveAllAccounts(accounts); }
-  document.querySelectorAll('#prof-lang-grid .lang-opt').forEach(o => o.classList.remove('selected')); el.classList.add('selected');
 }
 
 function saveNotifPref() { const prefs = { cases: document.getElementById('notif-cases')?.checked, ai: document.getElementById('notif-ai')?.checked, digest: document.getElementById('notif-digest')?.checked, bookmark: document.getElementById('notif-bookmark')?.checked }; localStorage.setItem('notifPrefs', JSON.stringify(prefs)); }
