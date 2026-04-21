@@ -17,10 +17,39 @@ let _casesFetchInterval = null;
 
 const SUPABASE_URL = 'https://bpeokbocsxijbjnbtivp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_YZ84jwL7tJDZFSciVGXwbw_mKrWZCfB';
-let supabaseClient = window._supabase;
-if (!supabaseClient && window.supabase && window.supabase.createClient) {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  window._supabase = supabaseClient;
+
+let supabaseClient = null;
+
+function initSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  
+  if (window._supabase) {
+    supabaseClient = window._supabase;
+    console.log('[Supabase] Using cached client');
+    return supabaseClient;
+  }
+  
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error('[Supabase] Supabase library not loaded');
+    return null;
+  }
+  
+  try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window._supabase = supabaseClient;
+    console.log('[Supabase] Client initialized');
+    return supabaseClient;
+  } catch(err) {
+    console.error('[Supabase] Failed to initialize:', err);
+    return null;
+  }
+}
+
+// Initialize on script load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSupabaseClient);
+} else {
+  initSupabaseClient();
 }
 
 // ================================================
@@ -67,8 +96,9 @@ function closeMobile() {
 }
 
 function logout() {
-  if (supabaseClient && supabaseClient.auth) {
-    supabaseClient.auth.signOut().catch(e => console.warn('Logout error:', e));
+  const client = initSupabaseClient();
+  if (client && client.auth) {
+    client.auth.signOut().catch(e => console.warn('Logout error:', e));
   }
   saveUser(null);
   localStorage.removeItem('nyayaUser');
@@ -76,24 +106,41 @@ function logout() {
   showPage('login');
 }
 
-if (supabaseClient && supabaseClient.auth) {
-  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+// Setup auth state change listener when Supabase is ready
+function setupAuthStateListener() {
+  const client = initSupabaseClient();
+  if (!client || !client.auth) {
+    console.log('[Auth] Supabase not ready, will retry...');
+    setTimeout(setupAuthStateListener, 500);
+    return;
+  }
+  
+  console.log('[Auth] Setting up auth state listener');
+  client.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth] Auth state changed:', event, !!session?.user);
     if (session?.user) {
       try {
-        const { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('id', session.user.id).single();
+        const { data: profile } = await client.from('user_profiles').select('*').eq('id', session.user.id).single();
         if (profile) {
           const userObj = { ...profile, email: session.user.email };
           saveUser(userObj);
           if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
         }
       } catch(e) {
-        console.log('Profile fetch error (normal for first login):', e.message);
+        console.log('[Auth] Profile fetch error (normal for first login):', e.message);
       }
     } else {
       saveUser(null);
       if (typeof updateNavForUser !== 'undefined') updateNavForUser(null);
     }
   });
+}
+
+// Set up auth listener when document is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupAuthStateListener);
+} else {
+  setupAuthStateListener();
 }
 
 async function loadCasesFromBackend(query = '', filter = 'all') {
@@ -683,27 +730,60 @@ async function doLogin() {
   const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase(); 
   const password = document.getElementById('login-password')?.value || '';
   const errorEl = document.getElementById('login-error');
-  if (!email || !email.includes('@')) { showAuthError(errorEl, 'Please enter a valid email address.'); return; }
-  if (!password) { showAuthError(errorEl, 'Please enter a password.'); return; }
+  
+  console.log('[Login] Starting login for:', email);
+  
+  if (!email || !email.includes('@')) { 
+    showAuthError(errorEl, 'Please enter a valid email address.'); 
+    return; 
+  }
+  if (!password) { 
+    showAuthError(errorEl, 'Please enter a password.'); 
+    return; 
+  }
+  
+  // Show loading state
+  const loginBtn = document.querySelector('.su-btn[onclick="doLogin()"]');
+  if (loginBtn) loginBtn.disabled = true;
   
   try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    // Ensure Supabase is initialized
+    const client = initSupabaseClient();
+    console.log('[Login] Supabase client ready:', !!client);
+    
+    if (!client || !client.auth) {
+      throw new Error('Supabase client not available');
+    }
+    
+    console.log('[Login] Attempting authentication...');
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    
+    console.log('[Login] Auth response - error:', error, 'data:', data);
+    
     if (error) { 
+      console.error('[Login] Auth error:', error);
       showAuthError(errorEl, error.message);
+      if (loginBtn) loginBtn.disabled = false;
       return;
     }
     
-    // Verify session was created
-    const { data: sessionData } = await supabaseClient.auth.getSession();
-    if (sessionData?.session?.user) {
-      // User authenticated - save locally and redirect
-      saveUser({ email: sessionData.session.user.email, id: sessionData.session.user.id });
-      showPage('dashboard');
-    } else {
-      showAuthError(errorEl, 'Login failed - session not created');
-    }
+    // Successful login
+    console.log('[Login] Login successful, user:', data?.user?.email);
+    
+    // Save user locally
+    saveUser({ 
+      email: data.user.email, 
+      id: data.user.id,
+      name: data.user.user_metadata?.name || data.user.email 
+    });
+    
+    console.log('[Login] Redirecting to dashboard...');
+    showPage('dashboard');
+    
   } catch(err) {
-    showAuthError(errorEl, 'Login error: ' + err.message);
+    console.error('[Login] Caught error:', err);
+    showAuthError(errorEl, 'Login error: ' + (err.message || 'Unknown error'));
+    if (loginBtn) loginBtn.disabled = false;
   }
 }
 function showAuthError(el, msg) { if (!el) return; el.innerHTML = msg; el.style.display = 'block'; setTimeout(() => { if (el) el.style.display = 'none'; }, 5000); }
@@ -762,7 +842,14 @@ function selectRole(role) {
 
 async function suSubmit() {
   if (!suData.role) { alert('Please select a role.'); return; }
-  const { data, error } = await supabaseClient.auth.signUp({
+  
+  const client = initSupabaseClient();
+  if (!client || !client.auth) {
+    alert('Signup error: Supabase not available');
+    return;
+  }
+  
+  const { data, error } = await client.auth.signUp({
     email: suData.email,
     password: suData.password,
     options: { data: { name: suData.name, role: suData.role } }
@@ -1092,13 +1179,26 @@ function initProfilePage() {
 function profOpen(sid) { document.getElementById('prof-menu').style.display = 'none'; document.querySelectorAll('#profile-settings .sub-section').forEach(s => s.style.display = 'none'); const sec = document.getElementById(sid); if (sec) sec.style.display = 'block'; }
 function profBack(menuId) { document.querySelectorAll('#profile-settings .sub-section').forEach(s => s.style.display = 'none'); const menu = document.getElementById(menuId); if (menu) menu.style.display = 'block'; }
 async function saveProfileInfo() {
-  const user = getUser(); if (!user) return; const nameInput = document.getElementById('prof-name-input'); const newName = nameInput?.value.trim();
+  const user = getUser(); 
+  if (!user) return; 
+  const nameInput = document.getElementById('prof-name-input'); 
+  const newName = nameInput?.value.trim();
   if (!newName) { nameInput.style.borderColor = '#ef4444'; setTimeout(() => nameInput.style.borderColor = '', 1500); return; }
-  user.name = newName; saveUser(user);
-  await supabaseClient.from('user_profiles').update({ name: newName }).eq('id', user.id);
-  updateNavForUser(user); document.getElementById('profile-name-display').textContent = newName;
-  const initials = newName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); document.getElementById('profile-avatar-initials').textContent = initials;
-  const msg = document.getElementById('prof-save-msg'); if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+  
+  user.name = newName; 
+  saveUser(user);
+  
+  const client = initSupabaseClient();
+  if (client) {
+    await client.from('user_profiles').update({ name: newName }).eq('id', user.id).catch(e => console.log('Profile update not critical:', e.message));
+  }
+  
+  updateNavForUser(user); 
+  document.getElementById('profile-name-display').textContent = newName;
+  const initials = newName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); 
+  document.getElementById('profile-avatar-initials').textContent = initials;
+  const msg = document.getElementById('prof-save-msg'); 
+  if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
 }
 
 function saveNotifPref() { const prefs = { cases: document.getElementById('notif-cases')?.checked, ai: document.getElementById('notif-ai')?.checked, digest: document.getElementById('notif-digest')?.checked, bookmark: document.getElementById('notif-bookmark')?.checked }; localStorage.setItem('notifPrefs', JSON.stringify(prefs)); }
