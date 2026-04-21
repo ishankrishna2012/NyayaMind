@@ -18,7 +18,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnon
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-const openaiApiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+let openaiApiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+if (openaiApiKey) openaiApiKey = openaiApiKey.replace(/\"/g, '');
 const openai = new OpenAI({ 
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: openaiApiKey || 'dummy-key-to-prevent-crash',
@@ -171,6 +172,38 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
+// ─── Free model fallback chain ───────────────────────────────────────────────
+const FREE_MODELS = [
+  'google/gemma-3-27b-it:free',
+  'google/gemma-3-12b-it:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'nvidia/nemotron-nano-9b-v2:free',
+  'openrouter/free',
+];
+
+async function chatWithFallback(messages, maxTokens = 500) {
+  for (const model of FREE_MODELS) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: maxTokens
+      });
+      const reply = completion.choices?.[0]?.message?.content;
+      if (reply && reply.trim().length > 0) {
+        console.log(`[AI] Responded via: ${model}`);
+        return reply;
+      }
+      console.warn(`[AI] ${model} returned empty, trying next...`);
+    } catch (err) {
+      console.warn(`[AI] ${model} failed: ${err.message}, trying next...`);
+    }
+  }
+  throw new Error('All models failed');
+}
+
 // ─── POST /api/chat ───────────────────────────────────────────────────────────
 app.post('/api/chat',
   body('message').trim().isLength({ min: 1, max: 2000 }),
@@ -180,12 +213,10 @@ app.post('/api/chat',
     try {
       let system = 'You are NyayaMind, an expert Indian legal AI assistant. Be concise and accurate.';
       if (caseContext) system += ` The user is asking about: "${caseContext.title}" (${caseContext.court}, ${caseContext.year}). Summary: ${caseContext.summary}`;
-      const completion = await openai.chat.completions.create({
-        model: process.env.AI_MODEL || 'openrouter/free', messages: [{ role: 'system', content: system }, { role: 'user', content: message }],
-        temperature: 0.7, max_tokens: 500
-      });
-      res.json({ success: true, reply: completion.choices[0].message.content });
+      const reply = await chatWithFallback([{ role: 'system', content: system }, { role: 'user', content: message }]);
+      res.json({ success: true, reply });
     } catch (err) {
+      console.error('AI Error:', err);
       res.status(500).json({ success: false, error: 'AI unavailable' });
     }
   }
@@ -197,13 +228,11 @@ app.post('/api/ai-search',
   async (req, res) => {
     if (handleValidationErrors(req, res)) return;
     try {
-      const completion = await openai.chat.completions.create({
-        model: process.env.AI_MODEL || 'openrouter/free', messages: [
-          { role: 'system', content: 'Extract core Indian legal keywords from the query. Return ONLY comma-separated keywords. No prose.' },
-          { role: 'user', content: req.body.query }
-        ], temperature: 0.2, max_tokens: 60
-      });
-      res.json({ success: true, optimized: completion.choices[0].message.content });
+      const optimized = await chatWithFallback([
+        { role: 'system', content: 'Extract core Indian legal keywords from the query. Return ONLY comma-separated keywords. No prose.' },
+        { role: 'user', content: req.body.query }
+      ], 60);
+      res.json({ success: true, optimized });
     } catch {
       res.status(500).json({ success: false, error: 'Search AI unavailable' });
     }
