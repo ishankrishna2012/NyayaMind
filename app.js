@@ -120,14 +120,31 @@ function setupAuthStateListener() {
     console.log('[Auth] Auth state changed:', event, !!session?.user);
     if (session?.user) {
       try {
-        const { data: profile } = await client.from('user_profiles').select('*').eq('id', session.user.id).single();
-        if (profile) {
-          const userObj = { ...profile, email: session.user.email };
-          saveUser(userObj);
-          if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
+        let profile = null;
+        try {
+          const { data, error } = await client.from('user_profiles').select('*').eq('id', session.user.id).single();
+          if (!error && data) profile = data;
+        } catch(e) {
+          console.log('[Auth] Profile fetch error (normal for first login):', e.message);
+        }
+        
+        const userObj = profile ? { ...profile, email: session.user.email } : {
+          email: session.user.email,
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+          role: session.user.user_metadata?.role || 'public',
+          language: session.user.user_metadata?.language || 'en'
+        };
+        
+        saveUser(userObj);
+        if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
+        
+        const activePage = document.querySelector('.page.active');
+        if (activePage && (activePage.id === 'page-login' || activePage.id === 'page-signup')) {
+            showPage('dashboard');
         }
       } catch(e) {
-        console.log('[Auth] Profile fetch error (normal for first login):', e.message);
+        console.log('[Auth] Error in auth listener:', e.message);
       }
     } else {
       saveUser(null);
