@@ -15,8 +15,15 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnon
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-const openaiApiKey = process.env.OPENAI_API_KEY; // MUST be set in Netlify Environment Variables
-const openai = new OpenAI({ apiKey: openaiApiKey || 'dummy-key-to-prevent-crash' });
+const openaiApiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY; // MUST be set in Netlify Environment Variables
+const openai = new OpenAI({ 
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: openaiApiKey || 'dummy-key-to-prevent-crash',
+  defaultHeaders: {
+    "HTTP-Referer": "https://nyayamind.netlify.app",
+    "X-Title": "NyayaMind"
+  }
+});
 
 // ── CORS headers ─────────────────────────────────────────────
 const CORS = {
@@ -179,7 +186,7 @@ exports.handler = async (event) => {
       let system = 'You are NyayaMind, an expert Indian legal AI assistant. Be concise and accurate.';
       if (caseContext) system += ` The user is asking about: "${caseContext.title}" (${caseContext.court}, ${caseContext.year}). Summary: ${caseContext.summary}`;
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: process.env.AI_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
         messages: [{ role: 'system', content: system }, { role: 'user', content: message }],
         temperature: 0.7, max_tokens: 500
       });
@@ -195,7 +202,7 @@ exports.handler = async (event) => {
     if (!query) return json(400, { success: false, error: 'Query required' });
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: process.env.AI_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
         messages: [
           { role: 'system', content: 'Extract core Indian legal keywords from the query. Return ONLY comma-separated keywords. No prose.' },
           { role: 'user', content: query }
