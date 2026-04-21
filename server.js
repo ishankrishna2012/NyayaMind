@@ -12,13 +12,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── Supabase clients ────────────────────────────────────────────────────────
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://bpeokbocsxijbjnbtivp.supabase.co';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-const openaiApiKey = process.env.OPENAI_API_KEY || 'placeholder';
+const openaiApiKey = process.env.OPENAI_API_KEY || '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';
 const openai = new OpenAI({ apiKey: openaiApiKey });
 
 // ─── Security ─────────────────────────────────────────────────────────────────
