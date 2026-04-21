@@ -16,7 +16,7 @@ let _casesLoaded = false;
 let _casesFetchInterval = null;
 
 const SUPABASE_URL = 'https://bpeokbocsxijbjnbtivp.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_YZ84jwL7tJDZFSciVGXwbw_mKrWZCfB';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
 
 let supabaseClient = null;
 
@@ -784,22 +784,41 @@ async function doLogin() {
       return;
     }
     
-    // Successful login
+    // Successful login — build user object
     console.log('[Login] Login successful, user:', data?.user?.email);
     
-    // Save user locally with role from user metadata
     const userMetadata = data.user.user_metadata || {};
-    saveUser({ 
-      email: data.user.email, 
+    let userObj = {
+      email: data.user.email,
       id: data.user.id,
-      name: userMetadata.name || data.user.email,
-      role: userMetadata.role || 'public', // Default to public if not set
+      name: userMetadata.name || data.user.email.split('@')[0],
+      role: userMetadata.role || 'public',
       language: userMetadata.language || 'en'
-    });
+    };
+
+    // Try to get richer profile from user_profiles table
+    try {
+      const { data: profile, error: profileErr } = await client
+        .from('user_profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      if (!profileErr && profile) {
+        userObj = { ...profile, email: data.user.email };
+        console.log('[Login] Profile loaded from DB:', profile.name, '|', profile.role);
+      }
+    } catch(profileEx) {
+      console.log('[Login] Could not fetch profile (using metadata):', profileEx.message);
+    }
+
+    // Save to localStorage and refresh nav immediately
+    saveUser(userObj);
+    if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
     
-    console.log('[Login] User saved with role:', userMetadata.role || 'public');
-    console.log('[Login] Redirecting to dashboard...');
+    console.log('[Login] User ready:', userObj.name, '| Role:', userObj.role);
+    console.log('[Login] Navigating to dashboard...');
     showPage('dashboard');
+    if (loginBtn) loginBtn.disabled = false;
     
   } catch(err) {
     console.error('[Login] Caught error:', err);
