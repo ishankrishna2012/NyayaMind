@@ -76,14 +76,18 @@ function logout() {
   showPage('login');
 }
 
-if (supabase && supabase.auth) {
-  supabase.auth.onAuthStateChange(async (event, session) => {
+if (supabaseClient && supabaseClient.auth) {
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
-      const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
-      if (profile) {
-        const userObj = { ...profile, email: session.user.email };
-        saveUser(userObj);
-        if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
+      try {
+        const { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('id', session.user.id).single();
+        if (profile) {
+          const userObj = { ...profile, email: session.user.email };
+          saveUser(userObj);
+          if (typeof updateNavForUser !== 'undefined') updateNavForUser(userObj);
+        }
+      } catch(e) {
+        console.log('Profile fetch error (normal for first login):', e.message);
       }
     } else {
       saveUser(null);
@@ -130,8 +134,30 @@ function startLiveCasePolling() {
   if (_casesFetchInterval) return;
   _casesFetchInterval = setInterval(async () => {
     const ok = await loadCasesFromBackend(currentQuery, currentFilter);
-    if (ok) { filterCases(); fetchLiveStats(); } // re-render with fresh data
+    if (ok) { filterCases(); fetchLiveStats(); updateDashboardCaseCount(); } // re-render with fresh data
   }, 15000);
+}
+
+// Update case count on dashboard
+function updateDashboardCaseCount() {
+  if (CASES.length === 0) {
+    // Load initial cases if not loaded yet
+    loadCasesFromBackend().then(ok => {
+      if (ok) {
+        const caseCountEl = document.getElementById('case-count');
+        if (caseCountEl) caseCountEl.textContent = `${CASES.length} cases available`;
+        const heroStatEl = document.getElementById('hero-stat-cases');
+        if (heroStatEl) heroStatEl.textContent = CASES.length;
+      }
+    });
+  } else {
+    const caseCountEl = document.getElementById('case-count');
+    if (caseCountEl) caseCountEl.textContent = `${CASES.length} cases available`;
+    const heroStatEl = document.getElementById('hero-stat-cases');
+    if (heroStatEl) heroStatEl.textContent = CASES.length;
+    const liveCountEl = document.getElementById('live-case-count');
+    if (liveCountEl) liveCountEl.textContent = `${CASES.length} cases loaded`;
+  }
 }
 
 let currentFilter = 'all';
@@ -659,8 +685,26 @@ async function doLogin() {
   const errorEl = document.getElementById('login-error');
   if (!email || !email.includes('@')) { showAuthError(errorEl, 'Please enter a valid email address.'); return; }
   if (!password) { showAuthError(errorEl, 'Please enter a password.'); return; }
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) { showAuthError(errorEl, error.message); } else { showPage('dashboard'); }
+  
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { 
+      showAuthError(errorEl, error.message);
+      return;
+    }
+    
+    // Verify session was created
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (sessionData?.session?.user) {
+      // User authenticated - save locally and redirect
+      saveUser({ email: sessionData.session.user.email, id: sessionData.session.user.id });
+      showPage('dashboard');
+    } else {
+      showAuthError(errorEl, 'Login failed - session not created');
+    }
+  } catch(err) {
+    showAuthError(errorEl, 'Login error: ' + err.message);
+  }
 }
 function showAuthError(el, msg) { if (!el) return; el.innerHTML = msg; el.style.display = 'block'; setTimeout(() => { if (el) el.style.display = 'none'; }, 5000); }
 function confirmLogout() { if (confirm('Are you sure you want to sign out?')) logout(); }
@@ -958,10 +1002,34 @@ function clearAllHist() { if (confirm('Clear all history?')) { localStorage.remo
 // ================================================
 function initDashboard() {
   const user = getUser();
-  document.getElementById('dash-pro').style.display = 'none'; document.getElementById('dash-pub').style.display = 'none'; document.getElementById('dash-default').style.display = 'none';
-  if (user?.role === 'professional') { document.getElementById('dash-pro').style.display = 'block'; initProDash(user); }
-  else if (user?.role === 'public') { document.getElementById('dash-pub').style.display = 'block'; initPubDash(user); }
-  else { document.getElementById('dash-default').style.display = 'block'; initDefaultDash(); }
+  
+  // Check if user is authenticated - redirect to login if not
+  if (!user) {
+    console.log('No user found - redirecting to login');
+    showPage('login');
+    return;
+  }
+  
+  document.getElementById('dash-pro').style.display = 'none'; 
+  document.getElementById('dash-pub').style.display = 'none'; 
+  document.getElementById('dash-default').style.display = 'none';
+  
+  if (user?.role === 'professional') { 
+    document.getElementById('dash-pro').style.display = 'block'; 
+    initProDash(user); 
+  }
+  else if (user?.role === 'public') { 
+    document.getElementById('dash-pub').style.display = 'block'; 
+    initPubDash(user); 
+  }
+  else { 
+    document.getElementById('dash-default').style.display = 'block'; 
+    initDefaultDash(); 
+  }
+  
+  // Start live case count updates
+  startLiveCasePolling();
+  updateDashboardCaseCount();
 }
 function initProDash(user) {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount(); const first = user.name.split(' ')[0];
@@ -1080,6 +1148,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ── Load cases from backend (Supabase) ──
   const loaded = await loadCasesFromBackend();
   fetchLiveStats();
+  updateDashboardCaseCount();
   if (loaded) {
     currentCases = [...CASES];
     console.log(`[NyayaMind] ✅ Loaded ${CASES.length} cases from backend`);
