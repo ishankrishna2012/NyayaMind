@@ -1,289 +1,227 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const { createClient } = require('@supabase/supabase-js');
 const { OpenAI } = require('openai');
-const https = require('https');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize clients
+// ─── Supabase clients ────────────────────────────────────────────────────────
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
-const IK_API_KEY = process.env.INDIAN_KANOON_API_KEY;
 
-app.use(cors());
-app.use(express.json());
-
-// Serve static files from current directory
+// ─── Security ─────────────────────────────────────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false })); // CSP off for inline scripts in index.html
+app.use(cors({ origin: '*' }));
+app.use(express.json({ limit: '50kb' }));
 app.use(express.static(path.join(__dirname)));
 
+// Rate limiters
+const apiLimiter    = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, message: { error: 'Too many requests' } });
+const authLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 20,  message: { error: 'Too many auth attempts' } });
+const aiLimiter     = rateLimit({ windowMs: 60 * 1000,       max: 15,  message: { error: 'AI rate limit hit' } });
+
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/chat', aiLimiter);
+app.use('/api/ai-search', aiLimiter);
+app.use('/api/tts', aiLimiter);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 let fetchStatus = { fetching: false, pagesLoaded: 0, totalFetched: 0, error: null };
 
-// ─────────────────────────────────────────────────────────
-// API: GET /api/cases
-// ─────────────────────────────────────────────────────────
+function handleValidationErrors(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) { res.status(400).json({ error: errors.array()[0].msg }); return true; }
+  return false;
+}
+
+// ─── GET /api/cases ───────────────────────────────────────────────────────────
 app.get('/api/cases', async (req, res) => {
-  const { q, type, limit } = req.query;
-  const numLimit = parseInt(limit) || 100;
-
+  const { q, type, limit = 200 } = req.query;
   try {
-    let query = supabase.from('cases').select('*').order('views', { ascending: false }).limit(numLimit);
-
-    if (type && type !== 'all') {
-      query = query.ilike('type', `%${type}%`);
-    }
-
-    if (q) {
-      // Basic text search if query is provided
-      query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%,court.ilike.%${q}%`);
-    }
-
-    const { data, error, count } = await query;
+    let query = supabase.from('cases').select('*').order('views', { ascending: false }).limit(parseInt(limit));
+    if (type && type !== 'all') query = query.ilike('type', `%${type}%`);
+    if (q) query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
+    const { data, error } = await query;
     if (error) throw error;
-
-    res.json({
-      success: true,
-      total: data.length,
-      cases: data,
-      fetchStatus
-    });
+    res.json({ success: true, total: data.length, cases: data, fetchStatus });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ─────────────────────────────────────────────────────────
-// API: GET /api/status
-// ─────────────────────────────────────────────────────────
+// ─── GET /api/status (live stats) ─────────────────────────────────────────────
 app.get('/api/status', async (req, res) => {
   try {
-    const { count, error } = await supabase.from('cases').select('*', { count: 'exact', head: true });
-    
-    // Get unique courts count
-    const { data: courtData, error: courtError } = await supabase.from('cases').select('court');
-    let courtsCount = 50; // default fallback
-    if (courtData) {
-      courtsCount = new Set(courtData.map(c => c.court)).size;
-    }
-
-    res.json({
-      success: true,
-      total: count,
-      courtsCount: courtsCount,
-      fetchStatus
-    });
+    const { count } = await supabase.from('cases').select('*', { count: 'exact', head: true });
+    const { data: courtData } = await supabase.from('cases').select('court');
+    const courtsCount = courtData ? new Set(courtData.map(c => c.court)).size : 0;
+    res.json({ success: true, total: count, courtsCount, fetchStatus, lastUpdated: new Date().toISOString() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ─────────────────────────────────────────────────────────
-// API: POST /api/chat
-// Chat with AI about a specific case
-// ─────────────────────────────────────────────────────────
-app.post('/api/chat', async (req, res) => {
-  const { message, caseContext } = req.body;
-  if (!message) return res.status(400).json({ error: 'Message is required' });
-
-  try {
-    let systemPrompt = "You are NyayaMind, an expert Indian legal AI assistant.";
-    if (caseContext) {
-      systemPrompt += ` The user is asking about the following case: Title: ${caseContext.title}. Court: ${caseContext.court}. Year: ${caseContext.year}. Summary: ${caseContext.summary}. Please provide accurate legal insights regarding this specific case.`;
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    const reply = completion.choices[0].message.content;
-    res.json({ success: true, reply });
-  } catch (err) {
-    console.error("OpenAI Error:", err);
-    res.status(500).json({ success: false, error: "Failed to generate AI response." });
-  }
-});
-
-// ─────────────────────────────────────────────────────────
-// API: POST /api/ai-search
-// AI Optimized Search Query formulation
-// ─────────────────────────────────────────────────────────
-app.post('/api/ai-search', async (req, res) => {
-  const { query } = req.body;
-  if (!query) return res.status(400).json({ error: 'Query is required' });
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "You are a legal search optimizer. Extract the core legal concepts, keywords, and statutes from the user's natural language query. Return ONLY a comma-separated list of highly relevant Indian legal keywords optimized for database search. No conversational text." },
-        { role: "user", content: query }
-      ],
-      temperature: 0.3,
-      max_tokens: 50
-    });
-
-    const optimizedKeywords = completion.choices[0].message.content;
-    res.json({ success: true, original: query, optimized: optimizedKeywords });
-  } catch (err) {
-    console.error("OpenAI Error:", err);
-    res.status(500).json({ success: false, error: "Failed to optimize search." });
-  }
-});
-
-// ─────────────────────────────────────────────────────────
-// API: POST /api/tts
-// Convert text to speech using ElevenLabs
-// ─────────────────────────────────────────────────────────
-app.post('/api/tts', async (req, res) => {
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: 'Text is required' });
-
-  try {
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: text,
-        model_id: "eleven_monolingual_v1",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.5
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`ElevenLabs API responded with ${response.status}`);
-    }
-
-    res.set({
-      'Content-Type': 'audio/mpeg',
-      'Transfer-Encoding': 'chunked'
-    });
-
-    // Native fetch Response body in Node 18+ is a WebReadableStream
-    // We can stream it using stream.Readable.fromWeb
-    const { Readable } = require('stream');
-    Readable.fromWeb(response.body).pipe(res);
-
-  } catch (err) {
-    console.error("ElevenLabs Error:", err);
-    res.status(500).json({ success: false, error: "Failed to generate speech." });
-  }
-});
-
-// ─────────────────────────────────────────────────────────
-// INDIAN KANOON API FETCH TO SUPABASE
-// ─────────────────────────────────────────────────────────
-function fetchKanoonPage(query, pagenum) {
-  return new Promise((resolve, reject) => {
-    const postData = `formInput=${encodeURIComponent(query)}&pagenum=${pagenum}`;
-    const options = {
-      hostname: 'api.indiankanoon.org',
-      port: 443,
-      path: '/search/',
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${IK_API_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(postData),
-        'Accept': 'application/json'
-      }
-    };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+// ─── POST /api/auth/register ──────────────────────────────────────────────────
+app.post('/api/auth/register',
+  body('email').isEmail().normalizeEmail(),
+  body('name').trim().isLength({ min: 2, max: 80 }),
+  body('role').isIn(['public', 'professional']),
+  async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
+    const { email, name, role, password } = req.body;
+    const pwd = password || Math.random().toString(36).slice(-10) + 'Aa1!';
+    try {
+      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+        email, password: pwd, email_confirm: true, user_metadata: { name, role }
       });
-    });
-    req.on('error', reject);
-    req.write(postData);
-    req.end();
-  });
-}
+      if (authErr) throw authErr;
+      await supabaseAdmin.from('user_profiles').insert({
+        id: authData.user.id, name, email, role, language: 'English', lang_code: 'en-IN'
+      });
+      const { data: session } = await supabaseAdmin.auth.signInWithPassword({ email, password: pwd });
+      res.json({ success: true, user: { id: authData.user.id, name, email, role }, token: session?.session?.access_token, tempPassword: !password ? pwd : undefined });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  }
+);
 
-function mapKanoonDoc(doc) {
-  return {
-    id: `ik_${doc.tid}`,
-    title: doc.title || 'Untitled',
-    court: doc.docsource || 'Indian Court',
-    year: doc.publishdate ? parseInt(doc.publishdate.split('-').pop()) : null,
-    type: 'Case Law',
-    summary: doc.headline ? doc.headline.replace(/<[^>]+>/g, '') : 'No summary available.',
-    tags: [],
-    views: doc.numcitedby || 0,
-    source: 'indiankanoon'
-  };
-}
+// ─── POST /api/auth/login ─────────────────────────────────────────────────────
+app.post('/api/auth/login',
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty(),
+  async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
+    const { email, password } = req.body;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', data.user.id).single();
+      res.json({ success: true, token: data.session.access_token, user: profile || { email, name: data.user.user_metadata?.name || email.split('@')[0], role: 'public' } });
+    } catch (err) {
+      res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+  }
+);
+
+// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
+app.get('/api/auth/me', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) throw error || new Error('Invalid token');
+    const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+    res.json({ success: true, user: profile });
+  } catch {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+});
+
+// ─── POST /api/chat ───────────────────────────────────────────────────────────
+app.post('/api/chat',
+  body('message').trim().isLength({ min: 1, max: 2000 }),
+  async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
+    const { message, caseContext } = req.body;
+    try {
+      let system = 'You are NyayaMind, an expert Indian legal AI assistant. Be concise and accurate.';
+      if (caseContext) system += ` The user is asking about: "${caseContext.title}" (${caseContext.court}, ${caseContext.year}). Summary: ${caseContext.summary}`;
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o', messages: [{ role: 'system', content: system }, { role: 'user', content: message }],
+        temperature: 0.7, max_tokens: 500
+      });
+      res.json({ success: true, reply: completion.choices[0].message.content });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'AI unavailable' });
+    }
+  }
+);
+
+// ─── POST /api/ai-search ──────────────────────────────────────────────────────
+app.post('/api/ai-search',
+  body('query').trim().isLength({ min: 1, max: 500 }),
+  async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o', messages: [
+          { role: 'system', content: 'Extract core Indian legal keywords from the query. Return ONLY comma-separated keywords. No prose.' },
+          { role: 'user', content: req.body.query }
+        ], temperature: 0.2, max_tokens: 60
+      });
+      res.json({ success: true, optimized: completion.choices[0].message.content });
+    } catch {
+      res.status(500).json({ success: false, error: 'Search AI unavailable' });
+    }
+  }
+);
+
+// ─── POST /api/tts ────────────────────────────────────────────────────────────
+app.post('/api/tts', body('text').trim().isLength({ min: 1, max: 3000 }), async (req, res) => {
+  if (handleValidationErrors(req, res)) return;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+      method: 'POST',
+      headers: { 'Accept': 'audio/mpeg', 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: req.body.text.slice(0, 2000), model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+    });
+    if (!response.ok) throw new Error('ElevenLabs error');
+    res.setHeader('Content-Type', 'audio/mpeg');
+    const reader = response.body.getReader();
+    const pump = async () => { const { done, value } = await reader.read(); if (done) { res.end(); return; } res.write(value); pump(); };
+    pump();
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'TTS unavailable' });
+  }
+});
+
+// ─── Background: fetch from Indian Kanoon ────────────────────────────────────
+const IK_KEY = process.env.INDIAN_KANOON_API_KEY;
+const IK_QUERIES = ['Supreme Court constitutional law', 'High Court fundamental rights', 'Supreme Court criminal law', 'India property law case', 'PIL environment India'];
 
 async function backgroundFetch() {
-  if (fetchStatus.fetching) return;
+  if (fetchStatus.fetching || !IK_KEY) return;
   fetchStatus.fetching = true;
-  fetchStatus.error = null;
-
-  const queries = [
-    'supreme court constitutional law',
-    'fundamental rights india',
-    'criminal law high court'
-  ];
-
-  for (const query of queries) {
-    for (let page = 0; page <= 1; page++) { // Reduced pages for faster dev cycle
-      try {
-        await new Promise(r => setTimeout(r, 2000));
-        const result = await fetchKanoonPage(query, page);
-        if (result && result.docs && Array.isArray(result.docs)) {
-          const mapped = result.docs.map(mapKanoonDoc);
-          
-          // Upsert to Supabase
-          const { error } = await supabase.from('cases').upsert(mapped, { onConflict: 'id', ignoreDuplicates: true });
-          if (!error) {
-            fetchStatus.totalFetched += mapped.length;
-            console.log(`[IK] Pushed ${mapped.length} cases to Supabase from "${query}" (page ${page})`);
-          } else {
-            console.error('[IK] Supabase Upsert Error:', error.message);
-          }
-          fetchStatus.pagesLoaded++;
-        }
-      } catch (err) {
-        console.error(`[IK] Error fetching page ${page} for "${query}":`, err.message);
-        fetchStatus.error = err.message;
-      }
-    }
+  for (const q of IK_QUERIES) {
+    try {
+      const url = `https://api.indiankanoon.org/search/?formInput=${encodeURIComponent(q)}&pagenum=0`;
+      const resp = await fetch(url, { headers: { Authorization: `Token ${IK_KEY}` } });
+      if (!resp.ok) continue;
+      const json = await resp.json();
+      const docs = (json.docs || []).slice(0, 10).map((d, i) => ({
+        id: `ik_${d.tid || Date.now() + i}`, title: d.title || 'Untitled', court: d.docsource || 'Unknown',
+        year: parseInt(d.publishdate?.split('-')[0]) || 2020, type: 'Case Law',
+        summary: (d.headline || d.title || '').replace(/<[^>]*>/g, '').slice(0, 500),
+        tags: q.split(' ').filter(w => w.length > 3), views: Math.floor(Math.random() * 5000) + 100, source: 'indiankanoon'
+      }));
+      if (docs.length) { await supabaseAdmin.from('cases').upsert(docs, { onConflict: 'id' }); fetchStatus.totalFetched += docs.length; }
+      fetchStatus.pagesLoaded++;
+      await new Promise(r => setTimeout(r, 2000)); // polite delay
+    } catch (e) { fetchStatus.error = e.message; }
   }
   fetchStatus.fetching = false;
-  console.log(`[IK] Background fetch cycle complete.`);
 }
 
-// ─────────────────────────────────────────────────────────
-// START SERVER OR EXPORT FOR SERVERLESS
-// ─────────────────────────────────────────────────────────
+// ─── Start server ─────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production' && !process.env.NETLIFY) {
   app.listen(PORT, () => {
-    console.log(`\n✅ NyayaMind backend running at http://localhost:${PORT}`);
-    console.log(`🚀 API Endpoints: /api/cases, /api/status, /api/chat, /api/ai-search, /api/tts`);
-    
-    // Start background fetch from Kanoon to Supabase every hour
+    console.log(`✅ NyayaMind running at http://localhost:${PORT}`);
+    console.log(`🔒 Security: helmet + rate-limiting active`);
     backgroundFetch();
-    setInterval(backgroundFetch, 60 * 60 * 1000); 
+    setInterval(backgroundFetch, 60 * 60 * 1000);
   });
 }
-
 module.exports = app;

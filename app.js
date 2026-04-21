@@ -629,7 +629,7 @@ function initSignupPage() {
   document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.lang-opt').forEach(o => o.classList.remove('selected'));
   document.querySelector('.lang-opt')?.classList.add('selected');
-  document.getElementById('sarvam-key-prompt').style.display = 'none';
+  
   // Reset to General Public defaults: blue bg + robot visible
   const signupPage = document.getElementById('page-signup');
   if (signupPage) signupPage.classList.remove('professional-signup');
@@ -2347,11 +2347,16 @@ async function fetchLiveStats() {
       const courtsStat = document.getElementById('stat-courts-covered');
       const updatedStat = document.getElementById('stat-last-updated');
       const mobileStat = document.getElementById('mobile-stat-cases');
+      
+      const proCasesStat = document.getElementById('pro-cases-indexed');
+      const proCourtsStat = document.getElementById('pro-courts-covered');
 
       if (heroStat) heroStat.textContent = total.toLocaleString() + '+';
       if (indexedStat) indexedStat.textContent = total.toLocaleString();
       if (courtsStat) courtsStat.textContent = courts + '+';
       if (mobileStat) mobileStat.textContent = total.toLocaleString();
+      if (proCasesStat) proCasesStat.textContent = total.toLocaleString();
+      if (proCourtsStat) proCourtsStat.textContent = courts + '+';
       if (updatedStat) {
         const now = new Date();
         updatedStat.textContent = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', day: 'numeric' });
