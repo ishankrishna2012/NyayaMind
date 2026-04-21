@@ -85,7 +85,24 @@ function showPage(name) {
   if (name === 'signup' && typeof initSignupPage !== 'undefined') initSignupPage();
   if (name === 'profile' && typeof initProfilePage !== 'undefined') initProfilePage();
   if (name === 'docparser' && typeof initDocParser !== 'undefined') initDocParser();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Handle moving the shared Cases UI
+  const casesUi = document.getElementById('shared-cases-ui');
+  if (casesUi) {
+    if (name === 'cases') {
+      const casesMount = document.getElementById('page-cases-inner');
+      if (casesMount) casesMount.appendChild(casesUi);
+      if (typeof filterCases !== 'undefined') filterCases();
+    } else if (name === 'dashboard' && getUser()?.role === 'professional') {
+      const proMount = document.getElementById('dash-pro-cases-mount');
+      if (proMount) proMount.appendChild(casesUi);
+    }
+  }
+
+  // Instantly jump to top so user sees the new page, not leftover scroll position
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo(0, 0);
   return false;
 }
 
@@ -841,8 +858,18 @@ function showAuthError(el, msg) { if (!el) return; el.innerHTML = msg; el.style.
 function confirmLogout() { if (confirm('Are you sure you want to sign out?')) logout(); }
 function updateNavForUser(user) {
   const guestActions = document.getElementById('nav-guest-actions'); const navUser = document.getElementById('nav-user'); const navUserName = document.getElementById('nav-user-name'); const navAvatar = document.getElementById('nav-user-avatar');
-  if (user) { if (guestActions) guestActions.style.display = 'none'; if (navUser) navUser.style.display = 'flex'; if (navUserName) navUserName.textContent = user.name.split(' ')[0]; if (navAvatar) navAvatar.textContent = user.name.charAt(0).toUpperCase(); }
-  else { if (guestActions) guestActions.style.display = 'flex'; if (navUser) navUser.style.display = 'none'; }
+  const casesLink = document.getElementById('nav-cases-link');
+  if (user) { 
+    if (guestActions) guestActions.style.display = 'none'; 
+    if (navUser) navUser.style.display = 'flex'; 
+    if (navUserName) navUserName.textContent = user.name.split(' ')[0]; 
+    if (navAvatar) navAvatar.textContent = user.name.charAt(0).toUpperCase(); 
+    if (casesLink) casesLink.style.display = user.role === 'public' ? 'inline-block' : 'none';
+  } else { 
+    if (guestActions) guestActions.style.display = 'flex'; 
+    if (navUser) navUser.style.display = 'none'; 
+    if (casesLink) casesLink.style.display = 'none';
+  }
 }
 
 // ================================================

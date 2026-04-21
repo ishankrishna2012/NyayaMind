@@ -33,6 +33,7 @@
     <ul class="nav-links" id="nav-links">
       <li><a href="#" onclick="showPage('home')" data-page="home">Home</a></li>
       <li><a href="#" onclick="showPage('about')" data-page="about">About</a></li>
+      <li><a href="#" onclick="showPage('cases')" data-page="cases" id="nav-cases-link" style="display:none;">Cases</a></li>
       <li><a href="#" onclick="showPage('compare')" data-page="compare">Compare</a></li>
       <li><a href="#" onclick="showPage('docparser')" data-page="docparser">Doc Parser</a></li>
       <li><a href="#" onclick="showPage('dashboard')" data-page="dashboard">Dashboard</a></li>
@@ -95,11 +96,20 @@
     </div>
     <div class="hero-stats">
       <div class="stat"><span id="hero-stat-cases">...</span><p>Legal Cases</p></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span>98%</span><p>Accuracy Rate</p></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span>24/7</span><p>AI Assistance</p></div>
+      <div class="pub-hero-bar">
+        <div class="phb-item"><h3>10K+</h3><p>Cases</p></div>
+        <div class="phb-item"><h3>AI</h3><p>Powered Search</p></div>
+        <div class="phb-item"><h3>Free</h3><p>For Public</p></div>
+      </div>
     </div>
+  </div>
+</section>
+
+<!-- ======= CASES PAGE (For Public Users) ======= -->
+<section id="page-cases" class="page">
+  <div class="dash-hero-spacer"></div>
+  <div class="dash-content-wrapper" id="page-cases-inner" style="padding-top: 20px;">
+    <!-- shared-cases-ui will be injected here when public user views cases -->
   </div>
 </section>
 
@@ -364,7 +374,12 @@
           <h1 class="dash-title" id="dash-pro-greeting">Welcome back</h1>
           <p class="dash-subtitle" id="dash-pro-lang"></p>
         </div>
-      <div class="cases-hero" style="margin-top: 20px; text-align: center;">
+      </div>
+      
+      <div id="dash-pro-cases-mount">
+        <div id="shared-cases-ui">
+          <div class="page-inner" style="padding-bottom: 20px;">
+            <div class="cases-hero" style="margin-top: 20px; text-align: center;">
         <div class="search-bar-wrap">
           <div class="search-bar">
             <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1014 15.5l.27.28v.79l5 5 1.5-1.5-5-5zM10 15a5 5 0 110-10 5 5 0 010 10z"/></svg>
@@ -405,6 +420,9 @@
         </div>
       </div>
       </div>
+        </div>
+      </div>
+      <div class="page-inner">
       <div class="dash-grid pro-grid" style="margin-top: 40px;">
         <div class="dash-card pro-card-accent"><div class="dash-card-icon">📁</div><p>Cases Indexed</p><h2 id="pro-cases-indexed">10,248</h2><div class="dash-card-bar"><div style="width:85%"></div></div><div class="dash-card-trend">+124 this week</div></div>
         <div class="dash-card"><div class="dash-card-icon">🔍</div><p>Research Queries</p><h2>342</h2><div class="dash-card-bar"><div style="width:55%"></div></div><div class="dash-card-trend">Active today</div></div>
@@ -434,17 +452,17 @@
         <div class="search-bar-wrap">
           <div class="search-bar">
             <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1014 15.5l.27.28v.79l5 5 1.5-1.5-5-5zM10 15a5 5 0 110-10 5 5 0 010 10z"/></svg>
-            <input type="text" id="searchInputPub" placeholder="Search cases, acts, sections... or use 🎤" oninput="filterCases(this.value)" />
+            <input type="text" id="searchInputPub" placeholder="Search cases, acts, sections... or use 🎤" onkeydown="if(event.key === 'Enter') { document.getElementById('searchInput').value = this.value; showPage('cases'); }" />
             <button class="mic-btn" onclick="toggleVoiceSearch()" title="Search by voice">🎤</button>
-            <button class="search-btn" onclick="filterCases(document.getElementById('searchInputPub').value)">Search</button>
+            <button class="search-btn" onclick="document.getElementById('searchInput').value = document.getElementById('searchInputPub').value; showPage('cases');">Search</button>
           </div>
         </div>
         <div class="filters">
-          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-          <button class="filter-btn" onclick="setFilter('Supreme Court', this)">Supreme Court</button>
-          <button class="filter-btn" onclick="setFilter('High Court', this)">High Court</button>
-          <button class="filter-btn" onclick="setFilter('Criminal', this)">Criminal</button>
-          <button class="filter-btn" onclick="setFilter('Civil', this)">Civil</button>
+          <button class="filter-btn active" onclick="setFilter('all', this); showPage('cases');">All</button>
+          <button class="filter-btn" onclick="setFilter('Supreme Court', this); showPage('cases');">Supreme Court</button>
+          <button class="filter-btn" onclick="setFilter('High Court', this); showPage('cases');">High Court</button>
+          <button class="filter-btn" onclick="setFilter('Criminal', this); showPage('cases');">Criminal</button>
+          <button class="filter-btn" onclick="setFilter('Civil', this); showPage('cases');">Civil</button>
         </div>
       </div>
       <div class="pub-hero-bar">
