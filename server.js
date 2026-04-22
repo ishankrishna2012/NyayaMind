@@ -55,6 +55,14 @@ function handleValidationErrors(req, res) {
   return false;
 }
 
+// ─── GET /api/config ──────────────────────────────────────────────────────────
+app.get('/api/config', (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPABASE_URL || '',
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || ''
+  });
+});
+
 // ─── GET /api/cases ───────────────────────────────────────────────────────────
 app.get('/api/cases', async (req, res) => {
   const { q, type, limit = 200 } = req.query;
@@ -326,7 +334,7 @@ async function backgroundFetch() {
 }
 
 // ─── Start server ─────────────────────────────────────────────────────────────
-if (process.env.NODE_ENV !== 'production' && !process.env.NETLIFY) {
+if (process.env.NODE_ENV !== 'production' && !process.env.NETLIFY && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`✅ NyayaMind running at http://localhost:${PORT}`);
     console.log(`🔒 Security: helmet + rate-limiting active`);

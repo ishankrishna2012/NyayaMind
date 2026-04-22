@@ -965,7 +965,7 @@ function selectRole(role) {
 async function suSubmit() {
   if (!suData.role) { alert('Please select a role.'); return; }
   
-  const client = initSupabaseClient();
+  const client = await initSupabaseClient();
   if (!client || !client.auth) {
     alert('Signup error: Supabase not available');
     return;
@@ -1331,7 +1331,7 @@ async function saveProfileInfo() {
   user.name = newName; 
   saveUser(user);
   
-  const client = initSupabaseClient();
+  const client = await initSupabaseClient();
   if (client) {
     await client.from('user_profiles').update({ name: newName }).eq('id', user.id).catch(e => console.log('Profile update not critical:', e.message));
   }
