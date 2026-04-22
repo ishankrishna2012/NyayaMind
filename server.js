@@ -201,8 +201,47 @@ async function chatWithFallback(messages, maxTokens = 500) {
       console.warn(`[AI] ${model} failed: ${err.message}, trying next...`);
     }
   }
+  
+  // Fallback to Gemini API
+  try {
+     console.log('[AI] Falling back to Gemini API...');
+     const geminiClient = new OpenAI({
+         baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+         apiKey: "AIzaSyC-XSljvImf17-9zvYoFZayb3qST7JigQU"
+     });
+     // If vision (images) are present in messages, Gemini supports it natively through OpenAI compat!
+     const completion = await geminiClient.chat.completions.create({
+         model: "gemini-2.5-flash",
+         messages,
+         temperature: 0.7,
+         max_tokens: maxTokens
+     });
+     const reply = completion.choices?.[0]?.message?.content;
+     if (reply && reply.trim().length > 0) return reply;
+  } catch (err) {
+     console.error("[AI] Gemini fallback failed", err.message);
+  }
+
   throw new Error('All models failed');
 }
+
+// ─── POST /api/doc-parse ──────────────────────────────────────────────────────
+app.post('/api/doc-parse',
+  body('text').optional(),
+  async (req, res) => {
+    try {
+      const { systemPrompt, userMessage } = req.body;
+      const reply = await chatWithFallback([
+        { role: 'system', content: systemPrompt },
+        ...userMessage
+      ], 2000);
+      res.json({ success: true, reply });
+    } catch (err) {
+      console.error('DocParser AI Error:', err);
+      res.status(500).json({ success: false, error: 'AI unavailable' });
+    }
+  }
+);
 
 // ─── POST /api/chat ───────────────────────────────────────────────────────────
 app.post('/api/chat',

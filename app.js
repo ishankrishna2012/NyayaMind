@@ -137,8 +137,8 @@ function closeMobile() {
   return false;
 }
 
-function logout() {
-  const client = initSupabaseClient();
+async function logout() {
+  const client = await initSupabaseClient();
   if (client && client.auth) {
     client.auth.signOut().catch(e => console.warn('Logout error:', e));
   }
@@ -149,8 +149,8 @@ function logout() {
 }
 
 // Setup auth state change listener when Supabase is ready
-function setupAuthStateListener() {
-  const client = initSupabaseClient();
+async function setupAuthStateListener() {
+  const client = await initSupabaseClient();
   if (!client || !client.auth) {
     console.log('[Auth] Supabase not ready, will retry...');
     setTimeout(setupAuthStateListener, 500);
@@ -591,7 +591,7 @@ function buildComparisonHTML(cases) {
                     </div>
                   </div>` : ''}
                 <div class="comp-col-actions">
-                  <button class="comp-view-btn" onclick="openCase(${c.id})">View Full Case →</button>
+                  <button class="comp-view-btn" onclick="openCase('${c.id}')">View Full Case →</button>
                 </div>
               </div>
             </div>`;
@@ -818,7 +818,7 @@ async function doLogin() {
   
   try {
     // Ensure Supabase is initialized
-    const client = initSupabaseClient();
+    const client = await initSupabaseClient();
     console.log('[Login] Supabase client ready:', !!client);
     
     if (!client || !client.auth) {
@@ -1120,14 +1120,14 @@ function renderActiveCaseBoard(c) {
     <div class="acb-meta">${c.court} • ${c.year} • ${c.type} Law</div>
     <div class="acb-summary">${c.summary.substring(0, 250)}...</div>
     <div class="acb-actions">
-      <button class="cc-btn-bm" id="acb-bm-btn-${c.id}" onclick="toggleBookmark(${c.id}, event); renderActiveCaseBoard(CASES.find(x => x.id === ${c.id}))">${isBookmarked(c.id) ? '🔖 Saved' : '+ Save'}</button>
-      <button class="cc-btn-compare ${inCompare ? 'in-compare' : ''}" onclick="toggleCompare(${c.id}, event); renderActiveCaseBoard(CASES.find(x => x.id === ${c.id}))"
+      <button class="cc-btn-bm" id="acb-bm-btn-${c.id}" onclick="toggleBookmark('${c.id}', event); renderActiveCaseBoard(CASES.find(x => x.id == '${c.id}'))">${isBookmarked(c.id) ? '🔖 Saved' : '+ Save'}</button>
+      <button class="cc-btn-compare ${inCompare ? 'in-compare' : ''}" onclick="toggleCompare('${c.id}', event); renderActiveCaseBoard(CASES.find(x => x.id == '${c.id}'))"
         style="${inCompare ? `background:${col.bg};border-color:${col.border};color:${col.text}` : ''}">
         ${inCompare ? `⊖ ${col.label}` : '⊕ Compare'}
       </button>
-      <button class="cc-btn-pdf" onclick="downloadCasePDF(${c.id}, event)">⬇ PDF</button>
-      <button class="fb-btn ${feedback === 'useful' ? 'active-useful' : ''}" onclick="submitFeedback(${c.id}, 'useful'); renderActiveCaseBoard(CASES.find(x => x.id === ${c.id}))" style="${feedback === 'useful' ? 'background:rgba(74,222,128,0.1);color:#4ade80' : ''}">👍</button>
-      <button class="fb-btn ${feedback === 'not_relevant' ? 'active-irrelevant' : ''}" onclick="submitFeedback(${c.id}, 'not_relevant'); renderActiveCaseBoard(CASES.find(x => x.id === ${c.id}))" style="${feedback === 'not_relevant' ? 'background:rgba(248,113,113,0.1);color:#f87171' : ''}">👎</button>
+      <button class="cc-btn-pdf" onclick="downloadCasePDF('${c.id}', event)">⬇ PDF</button>
+      <button class="fb-btn ${feedback === 'useful' ? 'active-useful' : ''}" onclick="submitFeedback('${c.id}', 'useful'); renderActiveCaseBoard(CASES.find(x => x.id == '${c.id}'))" style="${feedback === 'useful' ? 'background:rgba(74,222,128,0.1);color:#4ade80' : ''}">👍</button>
+      <button class="fb-btn ${feedback === 'not_relevant' ? 'active-irrelevant' : ''}" onclick="submitFeedback('${c.id}', 'not_relevant'); renderActiveCaseBoard(CASES.find(x => x.id == '${c.id}'))" style="${feedback === 'not_relevant' ? 'background:rgba(248,113,113,0.1);color:#f87171' : ''}">👎</button>
     </div>
   `;
   board.classList.add('show');
@@ -1139,13 +1139,34 @@ function renderActiveCaseBoard(c) {
 // ================================================
 function getBookmarks() { return JSON.parse(localStorage.getItem('bookmarks') || '[]'); }
 function saveBookmarks(b) { localStorage.setItem('bookmarks', JSON.stringify(b)); }
-function isBookmarked(id) { return getBookmarks().some(b => b.id === id); }
+function isBookmarked(id) { return getBookmarks().some(b => b.id == id); }
 function toggleBookmark(id, e) {
   if (e) e.stopPropagation();
-  const c = CASES.find(x => x.id === id); if (!c) return;
+  const c = CASES.find(x => x.id == id); if (!c) return;
   let b = getBookmarks();
-  if (isBookmarked(id)) { b = b.filter(x => x.id !== id); } else { b.push({ id: c.id, title: c.title, court: c.court, year: c.year, type: c.type, savedAt: Date.now() }); }
-  saveBookmarks(b); renderCases();
+  let saved = false;
+  if (isBookmarked(id)) { 
+    b = b.filter(x => x.id != id); 
+  } else { 
+    b.push({ id: c.id, title: c.title, court: c.court, year: c.year, type: c.type, savedAt: Date.now() }); 
+    saved = true;
+  }
+  saveBookmarks(b); 
+  if (typeof renderCases === 'function') renderCases();
+  if (typeof filterCases === 'function') filterCases(); // in case user is in list view
+  
+  // Show toast notification
+  if (typeof showPdfToast === 'function') {
+    showPdfToast(saved ? 'Case Saved to Bookmarks!' : 'Removed from Bookmarks');
+  } else {
+    // Basic fallback notification if showPdfToast not available
+    const toast = document.createElement('div');
+    toast.className = 'pdf-toast';
+    toast.textContent = saved ? 'Case Saved to Bookmarks!' : 'Removed from Bookmarks';
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.classList.add('show'); }, 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+  }
 }
 function bmOpen(sid) {
   document.getElementById('bm-menu').style.display = 'none';
@@ -1162,7 +1183,7 @@ function renderBmList() {
     const fbBadge = feedback === 'useful' ? ' <span style="color:#4ade80;font-size:11px">👍 Useful</span>' : feedback === 'not_relevant' ? ' <span style="color:#f87171;font-size:11px">👎 Not Relevant</span>' : '';
     return `<div class="data-card"><h4>${c.title}${fbBadge}</h4><p>${c.court} • ${c.year} • ${c.type}${note ? ' · 📝 Has note' : ''}</p>
       <div class="dc-actions">
-        <button class="cc-btn cc-btn-view" onclick="openCase(${c.id})">View</button>
+        <button class="cc-btn cc-btn-view" onclick="openCase('${c.id}')">View</button>
         <button id="note-btn-${c.id}" class="notes-toggle-btn ${note ? 'has-note' : ''}" onclick="toggleNotePanel(${c.id})">📝 ${note ? 'Notes ✓' : 'Notes'}</button>
         <button class="danger-btn" onclick="removeBm(${i})" style="padding:7px 14px;font-size:12px">Remove</button>
       </div>
@@ -1180,7 +1201,7 @@ function bmSearch() {
   const q = document.getElementById('bm-search-input').value.toLowerCase();
   const b = getBookmarks().filter(c => c.title.toLowerCase().includes(q) || c.type.toLowerCase().includes(q) || String(c.year).includes(q));
   const el = document.getElementById('bm-search-results');
-  el.innerHTML = b.length ? b.map(c => { const note = getNoteForCase(c.id); return `<div class="data-card" onclick="openCase(${c.id})" style="cursor:pointer"><h4>${c.title}</h4><p>${c.court} • ${c.year}${note ? ' · 📝' : ''}</p></div>`; }).join('') : '<p style="color:var(--text-dim);font-size:13px;margin-top:10px">No results found.</p>';
+  el.innerHTML = b.length ? b.map(c => { const note = getNoteForCase(c.id); return `<div class="data-card" onclick="openCase('${c.id}')" style="cursor:pointer"><h4>${c.title}</h4><p>${c.court} • ${c.year}${note ? ' · 📝' : ''}</p></div>`; }).join('') : '<p style="color:var(--text-dim);font-size:13px;margin-top:10px">No results found.</p>';
 }
 function renderBmStats() {
   const b = getBookmarks(); const feedbacks = getFeedbacks(); const notes = getNotes();
@@ -1197,7 +1218,7 @@ function getSearchHist() { return JSON.parse(localStorage.getItem('searchHistory
 function histOpen(sid) { document.getElementById('hist-menu').style.display = 'none'; document.querySelectorAll('#page-history .sub-section').forEach(s => s.style.display = 'none'); document.getElementById(sid).style.display = 'block'; }
 function histBack(menuId) { document.querySelectorAll('#page-history .sub-section').forEach(s => s.style.display = 'none'); document.getElementById(menuId).style.display = 'block'; }
 function loadAllHistory() { renderHistViewed(); renderHistSearch(); renderHistToday(); renderHistWeek(); }
-function renderHistViewed() { const h = getHistory(); const el = document.getElementById('hist-viewed-list'); if (!h.length) { el.innerHTML = `<div class="empty-state"><div class="es-icon">📂</div>No cases viewed yet.</div>`; return; } el.innerHTML = h.map(c => `<div class="data-card" onclick="openCase(${c.id})" style="cursor:pointer"><h4>${c.title}</h4><p>${c.court} • ${c.year} • ${new Date(c.time).toLocaleDateString()}</p></div>`).join(''); }
+function renderHistViewed() { const h = getHistory(); const el = document.getElementById('hist-viewed-list'); if (!h.length) { el.innerHTML = `<div class="empty-state"><div class="es-icon">📂</div>No cases viewed yet.</div>`; return; } el.innerHTML = h.map(c => `<div class="data-card" onclick="openCase('${c.id}')" style="cursor:pointer"><h4>${c.title}</h4><p>${c.court} • ${c.year} • ${new Date(c.time).toLocaleDateString()}</p></div>`).join(''); }
 function renderHistSearch() { const h = getSearchHist(); const el = document.getElementById('hist-search-list'); if (!h.length) { el.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div>No searches yet.</div>`; return; } el.innerHTML = h.map(q => `<div class="data-card" onclick="goSearch('${q}')" style="cursor:pointer"><h4>${q}</h4></div>`).join(''); }
 function goSearch(q) { showPage('cases'); setTimeout(() => { const input = document.getElementById('searchInput'); if (input) { input.value = q; filterCases(); } }, 100); }
 function renderHistToday() { const h = getHistory().filter(c => Date.now() - c.time < 86400000); const el = document.getElementById('hist-today-list'); if (!h.length) { el.innerHTML = `<div class="empty-state"><div class="es-icon">📅</div>No activity today.</div>`; return; } el.innerHTML = h.map(c => `<div class="data-card"><h4>${c.title}</h4><p>${c.court} • ${new Date(c.time).toLocaleTimeString()}</p></div>`).join(''); }
@@ -1264,7 +1285,7 @@ function initPubDash(user) {
   const ph = document.getElementById('pub-hist-bar'); if (ph) ph.style.width = Math.min(hist * 3, 100) + '%';
   const pu = document.getElementById('pub-useful-bar'); if (pu) pu.style.width = Math.min(useful * 10, 100) + '%';
   const feed = document.getElementById('pub-activity-feed'); const h = getHistory();
-  if (feed) { if (!h.length) feed.innerHTML = `<div class="empty-state" style="padding:32px"><div class="es-icon">📚</div>No activity yet.</div>`; else feed.innerHTML = h.slice(0, 5).map((c, i) => `<div class="activity-item" style="animation-delay:${i * 0.1}s;cursor:pointer" onclick="openCase(${c.id})"><div class="ai-dot"></div><span>📂 Viewed: <strong>${c.title.slice(0, 40)}…</strong></span></div>`).join(''); }
+  if (feed) { if (!h.length) feed.innerHTML = `<div class="empty-state" style="padding:32px"><div class="es-icon">📚</div>No activity yet.</div>`; else feed.innerHTML = h.slice(0, 5).map((c, i) => `<div class="activity-item" style="animation-delay:${i * 0.1}s;cursor:pointer" onclick="openCase('${c.id}')"><div class="ai-dot"></div><span>📂 Viewed: <strong>${c.title.slice(0, 40)}…</strong></span></div>`).join(''); }
 }
 function initDefaultDash() {
   const bm = getBookmarks().length; const hist = getHistory().length; const useful = getUsefulVotesCount();
@@ -2019,18 +2040,14 @@ async function dpAnalyse() {
     const userMessage  = dpBuildUserMessage();
 
     const requestBody = {
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: userMessage
+      systemPrompt,
+      userMessage
     };
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/doc-parse', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
@@ -2040,11 +2057,11 @@ async function dpAnalyse() {
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `API error ${response.status}`);
+      throw new Error(errData?.error || `API error ${response.status}`);
     }
 
     const data    = await response.json();
-    const aiText  = (data.content || []).map(b => b.text || '').join('').trim();
+    const aiText  = data.reply || '';
 
     // Save for Q&A context
     dpQaHistory = [
@@ -2100,8 +2117,8 @@ function dpBuildUserMessage() {
       role: 'user',
       content: [
         {
-          type: 'image',
-          source: { type: 'base64', media_type: dpCurrentMime, data: dpCurrentB64 }
+          type: 'image_url',
+          image_url: { url: `data:${dpCurrentMime};base64,${dpCurrentB64}` }
         },
         { type: 'text', text: 'Please analyse this legal document image.' }
       ]
@@ -2222,28 +2239,23 @@ async function dpAskQuestion() {
   thread.appendChild(typingDiv);
   thread.scrollTop = thread.scrollHeight;
 
-  // Build messages: history + new question
   const messages = [
     ...dpQaHistory,
     { role: 'user', content: query }
   ];
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/doc-parse', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 800,
-        system: `You are an expert Indian legal assistant helping analyse a legal document.
+        systemPrompt: `You are an expert Indian legal assistant helping analyse a legal document.
 Answer the user's question based on the document content discussed in the conversation.
 Be concise, clear, and refer to specific parts of the document where relevant.
 If the question is outside the document scope, say so politely.`,
-        messages: messages
+        userMessage: messages
       })
     });
 
@@ -2251,11 +2263,11 @@ If the question is outside the document scope, say so politely.`,
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `Error ${response.status}`);
+      throw new Error(errData?.error || `Error ${response.status}`);
     }
 
     const data   = await response.json();
-    const aiText = (data.content || []).map(b => b.text || '').join('').trim();
+    const aiText = data.reply || '';
 
     // Update history
     dpQaHistory.push({ role: 'user',      content: query  });
@@ -2322,8 +2334,11 @@ function dpEscape(str) {
 // PDF DOWNLOAD
 // ================================================
 function downloadCasePDF(id, e) {
-  if (e) e.stopPropagation();
-  const c = CASES.find(x => x.id === id);
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const c = CASES.find(x => x.id == id);
   if (!c) return;
 
   const { jsPDF } = window.jspdf;
