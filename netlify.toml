@@ -19,3 +19,6 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SECRETS_SCAN_OMIT_KEYS = "PORT,NODE_VERSION"
+  SECRETS_SCAN_OMIT_PATHS = "check_browser.js,debug_chat.js,test_openrouter.js,test_models.js,test_models2.js,test_openai.js,seed.js,server.js,server_log.txt"
+

@@ -8,8 +8,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { OpenAI } = require('openai');
 
 // ── Clients ──────────────────────────────────────────────────
-const supabaseUrl = process.env.SUPABASE_URL || 'https://bpeokbocsxijbjnbtivp.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -47,6 +47,15 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers: CORS, body: '' };
   }
 
+  // ── GET /config ──────────────────────────────────────────────
+  // Returns public (publishable) keys safe to expose to the browser.
+  if (event.path.endsWith('/config') && event.httpMethod === 'GET') {
+    return json(200, {
+      supabaseUrl: process.env.SUPABASE_URL || '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+    });
+  }
+
   // Extract the route from the path
   // Netlify rewrites /api/* → /.netlify/functions/api/:splat
   // event.path will be /.netlify/functions/api/cases etc.
@@ -75,8 +84,8 @@ exports.handler = async (event) => {
       return json(200, { success: true, total: data.length, cases: data });
     } catch (err) {
       try {
-        const qdrantUrl = (process.env.QDRANT_URL || 'https://27d551b6-c3b1-43c9-bf03-8551f9648f2f.europe-west3-0.gcp.cloud.qdrant.io').replace(/^["']|["']$/g, '');
-        const qdrantKey = (process.env.QDRANT_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6OGM5ZDhiMWYtYTdmMC00NjRjLTliNjMtZWI3ZGVjYjg2ODk0In0.Bce4VNx_ABmlVEiL5GiDz5eTsZRyHjgE-ATE8-Gmn7g').replace(/^["']|["']$/g, '');
+        const qdrantUrl = (process.env.QDRANT_URL || '').replace(/^["']|["']$/g, '');
+        const qdrantKey = (process.env.QDRANT_API_KEY || '').replace(/^["']|["']$/g, '');
         const collection = (process.env.QDRANT_COLLECTION || 'Court Orders').replace(/^["']|["']$/g, '');
         if (!qdrantUrl || !qdrantKey) throw new Error("Qdrant not configured");
         
@@ -231,13 +240,14 @@ async function chatWithFallback(messages, maxTokens = 500) {
   if (route === '/tts' && method === 'POST') {
     const { text } = body;
     if (!text) return json(400, { success: false, error: 'Text required' });
-    const voiceId = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+    const voiceId = process.env.ELEVENLABS_VOICE_ID;
+    if (!voiceId || !process.env.ELEVENLABS_API_KEY) return json(503, { success: false, error: 'TTS not configured' });
     try {
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: {
           'Accept': 'audio/mpeg',
-          'xi-api-key': process.env.ELEVENLABS_API_KEY || 'sk_300d3e020f79917db233a0583a0239a30d734d9705581625',
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

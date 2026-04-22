@@ -12,8 +12,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── Supabase clients ────────────────────────────────────────────────────────
-const supabaseUrl = process.env.SUPABASE_URL || 'https://bpeokbocsxijbjnbtivp.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);

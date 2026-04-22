@@ -15,18 +15,43 @@ let CASES = [];
 let _casesLoaded = false;
 let _casesFetchInterval = null;
 
-const SUPABASE_URL = 'https://bpeokbocsxijbjnbtivp.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZW9rYm9jc3hpamJqbmJ0aXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTM4MjksImV4cCI6MjA5MjI2OTgyOX0.0hXIn1w7jWjHjE5udsrpyULcKS-24A7kgGk0HUfH7sw';
+// IMPORTANT: Supabase credentials are loaded at runtime from /api/config
+// They are NEVER hardcoded in this file. Set SUPABASE_URL and SUPABASE_ANON_KEY
+// as Netlify environment variables.
+let SUPABASE_URL = '';
+let SUPABASE_KEY = '';
+
+// Load config from backend on startup
+const _configLoaded = (async () => {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const cfg = await res.json();
+      SUPABASE_URL = cfg.supabaseUrl || '';
+      SUPABASE_KEY = cfg.supabaseAnonKey || '';
+    }
+  } catch (e) {
+    console.warn('[Config] Could not load backend config:', e.message);
+  }
+})();
 
 let supabaseClient = null;
 
-function initSupabaseClient() {
+async function initSupabaseClient() {
   if (supabaseClient) return supabaseClient;
   
   if (window._supabase) {
     supabaseClient = window._supabase;
     console.log('[Supabase] Using cached client');
     return supabaseClient;
+  }
+
+  // Wait for config to load if not already done
+  await _configLoaded;
+  
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.warn('[Supabase] No credentials available — auth features disabled');
+    return null;
   }
   
   if (!window.supabase || !window.supabase.createClient) {
@@ -47,7 +72,7 @@ function initSupabaseClient() {
 
 // Initialize on script load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSupabaseClient);
+  document.addEventListener('DOMContentLoaded', () => initSupabaseClient());
 } else {
   initSupabaseClient();
 }
