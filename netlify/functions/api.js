@@ -86,8 +86,8 @@ exports.handler = async (event) => {
       try {
         const qdrantUrl = (process.env.QDRANT_URL || '').replace(/^["']|["']$/g, '');
         const qdrantKey = (process.env.QDRANT_API_KEY || '').replace(/^["']|["']$/g, '');
-        const collection = (process.env.QDRANT_COLLECTION || 'Court Orders').replace(/^["']|["']$/g, '');
-        if (!qdrantUrl || !qdrantKey) throw new Error("Qdrant not configured");
+        const collection = (process.env.QDRANT_COLLECTION || '').replace(/^["']|["']$/g, '');
+        if (!qdrantUrl || !qdrantKey || !collection) throw new Error("Qdrant not configured");
         
         const response = await fetch(`${qdrantUrl}/collections/${collection}/points/scroll`, {
           method: 'POST',
