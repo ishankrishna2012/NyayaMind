@@ -225,6 +225,24 @@ async function chatWithFallback(messages, maxTokens = 500) {
      console.error("[AI] Gemini fallback failed", err.message);
   }
 
+  // Fallback to OpenAI API natively
+  try {
+     console.log('[AI] Falling back to OpenAI native API...');
+     const openaiNative = new OpenAI({
+         apiKey: process.env.OPENAI_API_KEY
+     });
+     const completion = await openaiNative.chat.completions.create({
+         model: process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini",
+         messages,
+         temperature: 0.7,
+         max_tokens: maxTokens
+     });
+     const reply = completion.choices?.[0]?.message?.content;
+     if (reply && reply.trim().length > 0) return reply;
+  } catch (err) {
+     console.error("[AI] OpenAI native fallback failed", err.message);
+  }
+
   throw new Error('All models failed');
 }
 

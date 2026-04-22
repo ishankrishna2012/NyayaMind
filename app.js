@@ -160,7 +160,7 @@ async function setupAuthStateListener() {
   console.log('[Auth] Setting up auth state listener');
   client.auth.onAuthStateChange(async (event, session) => {
     console.log('[Auth] Auth state changed:', event, !!session?.user);
-    if (session?.user) {
+    if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
       try {
         let profile = null;
         try {
